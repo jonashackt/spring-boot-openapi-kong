@@ -22,6 +22,46 @@ Konga GUI
 
 docker-compose
 
+Integration: OpenAPI - Spring - Kong - Insomnia Designer
+
+
+
+agnostical! more pattern like
+
+Setup idea: Spring Boot REST / WebFlux --> [generate OpenAPI spec yamls via springdoc-openapi-maven-plugin](https://www.baeldung.com/spring-rest-openapi-documentation) --> Insomnia config file with [Kong Bundle plugin](https://insomnia.rest/plugins/insomnia-plugin-kong-bundle/) --> import into Kong and run via decK (normal Kong gateway without EE)
+
+Nothing really there right now:  https://www.google.com/search?q=openapi+spring+boot+kong
+
+* No change in Spring Boot dev workflow required, no custom annotations
+* elegant integration of Kong and Spring Boot services
+
+PLUS: CI process to regularly generate OpenAPI specs from Spring code -> and automatically import into Kong, which is an enterprise feature - or it is possible via:
+
+Insomnia Inso CLI (https://support.insomnia.rest/collection/105-inso-cli)
+
+See "From OpenAPI spec to configuration as code" in https://blog.codecentric.de/en/2020/09/offloading-and-more-from-reedelk-data-integration-services-through-kong-enterprise/
+
+
+Next:
+(backwards: OpenAPI --> Kong --> code)
+
+
+
+
+##### Install Insomnia Desinger with Kong Bundle plugin
+
+On a Mac simply (or have a look at https://insomnia.rest):
+
+```
+brew cask install insomnia-designer
+```
+
+Then go to https://insomnia.rest/plugins/insomnia-plugin-kong-bundle and click on `Install in Designer` & open the request in Insomnia Desinger:
+
+![insomnia-designer-kong-bundle-plugin](screenshots/insomnia-designer-kong-bundle-plugin.png)
+
+
+
 
 
 ## Links
@@ -52,6 +92,11 @@ https://medium.com/@rmharrison/an-honest-review-of-insomnia-designer-and-insomni
 
 
 With https://insomnia.rest/plugins/insomnia-plugin-kong-bundle/ you can deploy API definitions into Kong API gateway
+
+To see the integration in action, have a look on https://blog.codecentric.de/en/2020/09/offloading-and-more-from-reedelk-data-integration-services-through-kong-enterprise/ 
+
+https://github.com/codecentric/reedelk-bookingintegrationservice
+
 
 
 
