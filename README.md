@@ -227,7 +227,7 @@ Then go to https://insomnia.rest/plugins/insomnia-plugin-kong-bundle and click o
 ![insomnia-designer-kong-bundle-plugin](screenshots/insomnia-designer-kong-bundle-plugin.png)
 
 
-##### Import Springdoc generated openapi.json into Insomnia Designer
+### Import Springdoc generated openapi.json into Insomnia Designer
 
 Now let's try to import the generated [openapi.json](weatherbackend/target/openapi.json) into our Insomnia Designer by clicking on `Create` and then `Import from / File`:
 
@@ -237,7 +237,7 @@ That was easy :) Now you can already interact with your API through Insomnia.
 
 
 
-##### Generate Kong Declarative Config from Openapi
+### Generate Kong Declarative Config from Openapi
 
 The next step is to generate the Kong configuration from the OpenAPI specification. Therefore we need to click on the `Generate Config` button:
 
@@ -292,7 +292,7 @@ For now let's save this yaml inside the [kong/kong.yml](kong/kong.yml) file.
 
 
 
-##### Docker Compose with Kong DB-less deployment & declarative configuration
+### Docker Compose with Kong DB-less deployment & declarative configuration
 
 I have two goals here: First I want a simple deployment solution. If I could avoid it then I don't want to have multiple services only for the API gateway. I want to start small and you as a reader should be able to easily follow.
 
@@ -427,7 +427,35 @@ If your log looks somehow like the above you can also have a look at the admin A
 
 ![docker-compose-db-less-deploy-database-off](screenshots/docker-compose-db-less-deploy-database-off.png)  
 
+We can also double check http://localhost:8001/status , where we have a good overview of Kong's current availability.
 
+
+
+### Access the Spring Boot app through Kong
+
+The next thing we need to look at is how to access our `weatherbackend` through Kong. Specifically we need to have a look into the configured Kong services, if the OpenAPI spec import worked out in the way we'd expected it in the first place.
+
+Without using Kong's declarative configuration [we need to add services and routes manually through the Kong admin API](https://blog.codecentric.de/en/2019/09/api-management-kong-update/). But as we use declarative configuration, which we generated from the OpenAPI spec, everything is taken care for us already.
+
+
+Therefore let's have a look into the list of all currently registered Kong services at http://localhost:8001/services 
+
+![kong-admin-api-services-overview](screenshots/kong-admin-api-services-overview.png)
+
+You can also access the Kong routes of our Spring Boot-backed service with this URL:
+
+http://localhost:8001/services/OpenAPI_definition/routes 
+
+
+Now we can use Postman, Insomnia Core or the like to access our Spring Boot app with a GET on http://localhost:8000/weather/Jonas
+
+But right now I run into problems here:
+
+```
+kong_1            | 2020/11/04 18:56:05 [error] 24#0: *14486 connect() failed (111: Connection refused) while connecting to upstream, client: 172.19.0.1, server: kong, request: "GET /weather/Jonas HTTP/1.1", upstream: "http://127.0.0.1:8080/weather/Jonas", host: "localhost:8000"
+kong_1            | 2020/11/04 18:56:05 [error] 24#0: *14486 connect() failed (111: Connection refused) while connecting to upstream, client: 172.19.0.1, server: kong, request: "GET /weather/Jonas HTTP/1.1", upstream: "http://127.0.0.1:8080/weather/Jonas", host: "localhost:8000"
+kong_1            | 172.19.0.1 - - [04/Nov/2020:18:56:05 +0000] "GET /weather/Jonas HTTP/1.1" 502 75 "-" "insomnia/2020.4.2"
+```
 
 
 
@@ -456,6 +484,8 @@ https://docs.konghq.com/hub/
 https://github.com/springdoc/springdoc-openapi-maven-plugin
 
 https://stackoverflow.com/questions/59616165/what-is-the-function-of-springdoc-openapi-maven-plugin-configuration-apidocsurl
+
+https://www.baeldung.com/spring-rest-openapi-documentation
 
 
 #### Insomnia (Core) & Insomia Designer

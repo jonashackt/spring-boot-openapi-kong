@@ -33,7 +33,7 @@ public class WeatherBackendControllerTests {
     }
 
 	@Test
-    public void testWithRestAssured() {
+    public void should_create_weather() {
 	    
 	    Weather weather = new Weather();
 	    weather.setFlagColor("blue");
