@@ -287,7 +287,7 @@ upstreams:
 
 ```
 
-For now let's save this yaml inside the [kong/kong.yml](kong/kong.yaml) file.
+For now let's save this yaml inside the [kong/kong.yml](kong/kong.yml) file.
 
 
 ##### Import Kong Declarative config into Kong with decK
@@ -351,11 +351,11 @@ services:
       KONG_ADMIN_ERROR_LOG: /dev/stderr
       KONG_ADMIN_LISTEN: '0.0.0.0:8001'
       KONG_DATABASE: "off"
-      KONG_DECLARATIVE_CONFIG: kong.yml
+      KONG_DECLARATIVE_CONFIG: /usr/local/kong/declarative/kong.yml
       KONG_PROXY_ACCESS_LOG: /dev/stdout
       KONG_PROXY_ERROR_LOG: /dev/stderr
     volumes:
-      - /kong:/usr/local/kong/declarative/kong.yml
+      - ./kong/:/usr/local/kong/declarative
     networks:
       - kong-net
     ports:
