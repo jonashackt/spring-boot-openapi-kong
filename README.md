@@ -1,4 +1,4 @@
-# spring-boot-kong
+# spring-boot-openapi-kong
 Example project showing how to integrate Spring Boot microservices with Kong API Gateway
 
 
@@ -47,13 +47,33 @@ Next:
 
 
 
-### Create a Spring Boot App
 
-This is the easy part. We all know where to start: Go to start.spring.io and create a WebFlux skeleton:
 
-![start-spring-io](screenshots/start-spring-io.png)
+### Create a Spring Boot App with REST endpoints
 
-And then we need to implement a simple reactive REST service, that is able to serve a simple GET request.
+This is the easy part. We all know where to start: Go to start.spring.io and create a Spring REST app skeleton.
+
+As I wanted to rebuild my good old Spring Cloud Netflix / Eureka based apps, I simply too the `weatherbackend` app from https://github.com/jonashackt/cxf-spring-cloud-netflix-docker/tree/master/weatherbackend
+
+But why didn't I go with a reactive WebFlux based app? 
+
+
+##### The current problem with springdoc-openapi and WebFlux based Spring Boot apps
+
+WebFlux based Spring Boot Apps need some `springdoc-openapi` specific classes right now in order to fully generate the OpenAPI live documentation in the end. See the demos at
+
+https://github.com/springdoc/springdoc-openapi-demos
+
+And especially the webflux functional demo at: https://github.com/springdoc/springdoc-openapi-demos/blob/master/springdoc-openapi-spring-boot-2-webflux-functional where these imports are used:
+
+```java
+import static org.springdoc.core.fn.builders.apiresponse.Builder.responseBuilder;
+import static org.springdoc.core.fn.builders.parameter.Builder.parameterBuilder;
+import static org.springdoc.webflux.core.fn.SpringdocRouteBuilder.route;
+```
+
+I can fully discourage to go with this approach, but for this project I wanted a 100% "springdoc-free" standard Spring Boot app, where the springdoc feature are __ONLY__ used to generate OpenAPI specs - and not rely onto some dependencies from springdoc. Since that would imply that every Spring Boot project that wanted to adopt the solution outlined here would need to integrate springdoc classes in their projects.
+
 
 
 ### Generate an OpenAPI spec with the springdoc-openapi-maven-plugin
@@ -82,6 +102,10 @@ Otherwise the `springdoc-openapi-maven-plugin` will run into errors like this (a
 [INFO] Stopping application...
 2020-11-04 10:18:36.851  INFO 42036 --- [on(4)-127.0.0.1] inMXBeanRegistrar$SpringApplicationAdmin : Application shutdown requested.
 ```
+
+As a sidenote: if you fire up your Spring Boot app from here with `mvn spring-boot:run`, you can access the live API documentation already at http://localhost:8080/swagger-ui.html
+
+![openapi-swagger-ui](screenshots/openapi-swagger-ui.png)
 
 Now we can add the `springdoc-openapi-maven-plugin` to our [hellobackend/pom.xml](hellobackend/pom.xml):
 
@@ -155,9 +179,27 @@ This indicates that the OpenAPI spec generation was successful. Therefore we nee
       "description": "Generated server url"
     }
   ],
-  "paths": {},
-  "components": {}
-}
+  "paths": {
+    "/weather/general/outlook": {
+      "get": {
+        "tags": [
+          "weather-backend-controller"
+        ],
+        "operationId": "infoAboutGeneralOutlook",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+}}}
 ```
 
 
