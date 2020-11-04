@@ -1,0 +1,38 @@
+_format_version: "1.1"
+services:
+  - name: OpenAPI_definition
+    url: http://localhost:8080
+    plugins: []
+    routes:
+      - tags:
+          - OAS3_import
+        name: OpenAPI_definition-path-get
+        methods:
+          - GET
+        paths:
+          - /weather/general/outlook
+        strip_path: false
+      - tags:
+          - OAS3_import
+        name: OpenAPI_definition-path_1-post
+        methods:
+          - POST
+        paths:
+          - /weather/general/outlook
+        strip_path: false
+      - tags:
+          - OAS3_import
+        name: OpenAPI_definition-path_2-get
+        methods:
+          - GET
+        paths:
+          - /weather/(?<name>\S+)$
+        strip_path: false
+    tags:
+      - OAS3_import
+upstreams:
+  - name: OpenAPI_definition
+    targets:
+      - target: localhost:8080
+    tags:
+      - OAS3_import
