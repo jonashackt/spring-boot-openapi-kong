@@ -16,7 +16,7 @@ Here's the example project: https://github.com/jonashackt/cxf-spring-cloud-netfl
 The goal is to rebuild the project using Kong https://github.com/Kong/kong
 
 
-### Ideas
+### Idea & Setup
 
 Konga GUI
 
@@ -44,6 +44,16 @@ See "From OpenAPI spec to configuration as code" in https://blog.codecentric.de/
 
 Next:
 (backwards: OpenAPI --> Kong --> code)
+
+
+
+### Create a Spring Boot App
+
+This is the easy part. We all know where to start: Go to start.spring.io and create a WebFlux skeleton:
+
+![start-spring-io](screenshots/start-spring-io.png)
+
+And then we need to implement a simple reactive REST service, that is able to serve a simple GET request.
 
 
 
