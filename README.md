@@ -290,30 +290,6 @@ upstreams:
 For now let's save this yaml inside the [kong/kong.yml](kong/kong.yml) file.
 
 
-##### Import Kong Declarative config into Kong with decK
-
-As my colleague [Daniel Kocot already outlined](https://blog.codecentric.de/en/2019/12/kong-api-gateway-declarative-configuration-using-deck-and-visualizations-with-konga/) there is [decK](https://github.com/Kong/deck) for declarative config handling for Kong.
-
-With the help of `decK` we should be able to import the declarative configuration into Kong.
-
-
-
-
-### Create a Kong infrastructure
-
-Official Kong docker-compose template: https://github.com/Kong/docker-kong/blob/master/compose/docker-compose.yml
-
-https://blog.codecentric.de/en/2019/09/api-management-kong-update/
-
-https://github.com/danielkocot/kong-blogposts/blob/master/docker-compose.yml
-
-
-First question: What is this `kong-migration` Docker container about? [Daniel answers it](https://blog.codecentric.de/en/2019/09/api-management-kong-update/):
-
-> the kong-migration service is used for the initial generation of the objects in the kong-database. Unfortunately, the configuration of the database is not managed by the kong service.
-
-
-
 
 
 ##### Docker Compose with Kong DB-less deployment & declarative configuration
@@ -325,7 +301,7 @@ As [the official Docker Compose file](https://github.com/Kong/docker-kong/blob/m
 What I learned in my years in the IT industry: Every component you don't have is a good component. So there must be a way to deploy Kong without that much "hassle". And I found one:
 
  
-The documentation at https://docs.konghq.com/2.2.x/db-less-and-declarative-config/ says, that DB-less mode is possible since Kong 1.1 and has a number of benefits:
+The documentation at https://docs.konghq.com/2.2.x/db-less-and-declarative-config/ & https://docs.konghq.com/install/docker says, that DB-less mode is possible since Kong 1.1 and has a number of benefits:
 
 * reduced number of dependencies: no need to manage a database installation if the entire setup for your use-cases fits in memory
 * it is a good fit for automation in CI/CD scenarios: configuration for entities can be kept in a single source of truth managed via a Git repository
@@ -333,9 +309,11 @@ The documentation at https://docs.konghq.com/2.2.x/db-less-and-declarative-confi
 
 But be aware that are also some drawbacks. [Not all plugins support this mode]https://docs.konghq.com/2.2.x/db-less-and-declarative-config/#plugin-compatibility) and [there is no central configuration database](https://docs.konghq.com/2.2.x/db-less-and-declarative-config/#no-central-database-coordination) if you want to run multiple Kong nodes. But for our simple setup we should be able to live with that. 
 
-There's some info in the docs at https://docs.konghq.com/install/docker how to spin up Kong in DB-less mode
 
-https://stackoverflow.com/questions/55587114/kong-db-less-in-docker
+But there's another advantage: we don't need to use [decK](https://github.com/Kong/deck) here as my colleague [already outlined](https://blog.codecentric.de/en/2019/12/kong-api-gateway-declarative-configuration-using-deck-and-visualizations-with-konga/) is used with Kong for declarative config handling.
+
+This is only needed, if you use Kong with a Database deployment! If you choose the DB-less/declarative configuration approach, your declarative file is already everything we need! :)
+
 
 
 So let's do it. I'll try to setup the simplest possible `docker-compose.yml` here in order to spin up Kong. I'll derive it [from the official one](https://github.com/Kong/docker-kong/blob/master/compose/docker-compose.yml), the one my colleague Daniel Kocot [used in his blog posts](https://github.com/danielkocot/kong-blogposts/blob/master/docker-compose.yml) and others [like this](https://medium.com/@matias_azucas/db-less-kong-tutorial-8cbf8f70b266). 
@@ -389,8 +367,65 @@ networks:
   kong-net:
     external: false
 ```
- 
 
+I litterally blew everything out we don't really really need in a DB-less scenario! No `kong-migrations`, `kong-migrations-up`, `kong-db` services - and no extra `Dockerfile` [as shown in this blog post](https://medium.com/@matias_azucas/db-less-kong-tutorial-8cbf8f70b266).
+
+I only wanted to have a single `kong` service for the API gateway - and a `weatherbackend` service that is registered in Kong later.
+
+As stated [in the docs for DB-less deployment](https://docs.konghq.com/install/docker/?_ga=2.266755086.1634614376.1604405282-930789398.1604405282) I used `KONG_DATABASE: "off"` to switch to DB-less mode and `KONG_DECLARATIVE_CONFIG: /usr/local/kong/declarative/kong.yml` to tell Kong where to get the `kong.yml` we generated with the Insomnia Designer's Kong Bungle plugin.
+To have the file present at `/usr/local/kong/declarative/kong.yml`, I used a simple volume mount like this: `./kong/:/usr/local/kong/declarative`. No need to manually create the Volume as described in the docs - or to create another Dockerfile solely to load the config file into the Kong container. Simply nothing needed instead of this sweet volume!
+
+Now this thing starts to make fun to me :)
+
+ 
+Now let's fire up our Kong setup with `docker-compose up`
+
+```
+$ docker-compose up
+Starting spring-boot-openapi-kong_kong_1           ... done
+Starting spring-boot-openapi-kong_weatherbackend_1 ... done
+Attaching to spring-boot-openapi-kong_weatherbackend_1, spring-boot-openapi-kong_kong_1
+kong_1            | 2020/11/04 14:21:11 [notice] 1#0: using the "epoll" event method
+kong_1            | 2020/11/04 14:21:11 [notice] 1#0: openresty/1.17.8.2
+kong_1            | 2020/11/04 14:21:11 [notice] 1#0: built by gcc 9.3.0 (Alpine 9.3.0)
+kong_1            | 2020/11/04 14:21:11 [notice] 1#0: OS: Linux 5.4.39-linuxkit
+kong_1            | 2020/11/04 14:21:11 [notice] 1#0: getrlimit(RLIMIT_NOFILE): 1048576:1048576
+kong_1            | 2020/11/04 14:21:11 [notice] 1#0: start worker processes
+kong_1            | 2020/11/04 14:21:11 [notice] 1#0: start worker process 22
+kong_1            | 2020/11/04 14:21:11 [notice] 1#0: start worker process 23
+kong_1            | 2020/11/04 14:21:11 [notice] 1#0: start worker process 24
+kong_1            | 2020/11/04 14:21:11 [notice] 1#0: start worker process 25
+kong_1            | 2020/11/04 14:21:11 [notice] 23#0: *2 [lua] cache.lua:374: purge(): [DB cache] purging (local) cache, context: init_worker_by_lua*
+kong_1            | 2020/11/04 14:21:11 [notice] 23#0: *2 [lua] cache.lua:374: purge(): [DB cache] purging (local) cache, context: init_worker_by_lua*
+kong_1            | 2020/11/04 14:21:11 [notice] 23#0: *2 [kong] init.lua:354 declarative config loaded from /usr/local/kong/declarative/kong.yml, context: init_worker_by_lua*
+weatherbackend_1  |
+weatherbackend_1  |   .   ____          _            __ _ _
+weatherbackend_1  |  /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+weatherbackend_1  | ( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+weatherbackend_1  |  \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+weatherbackend_1  |   '  |____| .__|_| |_|_| |_\__, | / / / /
+weatherbackend_1  |  =========|_|==============|___/=/_/_/_/
+weatherbackend_1  |  :: Spring Boot ::        (v2.3.5.RELEASE)
+weatherbackend_1  |
+weatherbackend_1  | 2020-11-04 14:21:13.226  INFO 6 --- [           main] io.jonashackt.WeatherBackendApplication  : Starting WeatherBackendApplication v2.3.5.RELEASE on 209e8a7cbb36 with PID 6 (/app.jar started by root in /)
+weatherbackend_1  | 2020-11-04 14:21:13.239  INFO 6 --- [           main] io.jonashackt.WeatherBackendApplication  : No active profile set, falling back to default profiles: default
+weatherbackend_1  | 2020-11-04 14:21:15.920  INFO 6 --- [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port(s): 8080 (http)
+weatherbackend_1  | 2020-11-04 14:21:15.958  INFO 6 --- [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+weatherbackend_1  | 2020-11-04 14:21:15.960  INFO 6 --- [           main] org.apache.catalina.core.StandardEngine  : Starting Servlet engine: [Apache Tomcat/9.0.39]
+weatherbackend_1  | 2020-11-04 14:21:16.159  INFO 6 --- [           main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+weatherbackend_1  | 2020-11-04 14:21:16.163  INFO 6 --- [           main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 2714 ms
+weatherbackend_1  | 2020-11-04 14:21:16.813  INFO 6 --- [           main] o.s.s.concurrent.ThreadPoolTaskExecutor  : Initializing ExecutorService 'applicationTaskExecutor'
+weatherbackend_1  | 2020-11-04 14:21:18.534  INFO 6 --- [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port(s): 8080 (http) with context path ''
+weatherbackend_1  | 2020-11-04 14:21:18.564  INFO 6 --- [           main] io.jonashackt.WeatherBackendApplication  : Started WeatherBackendApplication in 7.188 seconds (JVM running for 8.611)
+kong_1            | 172.19.0.1 - - [04/Nov/2020:14:25:16 +0000] "GET / HTTP/1.1" 404 48 "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:82.0) Gecko/20100101 Firefox/82.0"
+```
+
+A crucial part here is that Kong successfully loads the declarative configuration file and logs something like `[kong] init.lua:354 declarative config loaded from /usr/local/kong/declarative/kong.yml`
+
+
+If your log looks somehow like the above you can also have a look at the admin API by opening http://localhost:8001/ in your browser. [As the docs state](https://docs.konghq.com/2.2.x/db-less-and-declarative-config/#setting-up-kong-in-db-less-mode) everything should be ok, if the response says `"database": "off"` somewhere like:
+
+![docker-compose-db-less-deploy-database-off](screenshots/docker-compose-db-less-deploy-database-off.png)  
 
 
 
