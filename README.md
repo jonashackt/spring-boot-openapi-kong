@@ -2,6 +2,8 @@
 
 [![Build Status](https://github.com/jonashackt/spring-boot-openapi-kong/workflows/build/badge.svg)](https://github.com/jonashackt/spring-boot-openapi-kong/actions)
 [![License](http://img.shields.io/:license-mit-blue.svg)](https://github.com/jonashackt/spring-boot-buildpack/blob/master/LICENSE)
+[![renovateenabled](https://img.shields.io/badge/renovate-enabled-yellow)](https://renovatebot.com)
+[![versionspringboot](https://img.shields.io/badge/dynamic/xml?color=brightgreen&url=https://raw.githubusercontent.com/jonashackt/spring-boot-openapi-kong/main/weatherbackend/pom.xml&query=%2F%2A%5Blocal-name%28%29%3D%27project%27%5D%2F%2A%5Blocal-name%28%29%3D%27parent%27%5D%2F%2A%5Blocal-name%28%29%3D%27version%27%5D&label=springboot)](https://github.com/spring-projects/spring-boot)
 
 
 Example project showing how to integrate Spring Boot microservices with Kong API Gateway
