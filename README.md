@@ -171,7 +171,7 @@ The output should contain something like that:
 ...
 ```
 
-This indicates that the OpenAPI spec generation was successful. Therefore we need to have a look into the `hellobackend/target` directory, where a file called [openapi.json](hellobackend/target/openapi.json) should be present now (you may need to reformat the code inside you IDE to not look into a one-liner ;) ):
+This indicates that the OpenAPI spec generation was successful. Therefore we need to have a look into the `weatherbackend/target` directory, where a file called [openapi.json](weatherbackend/target/openapi.json) should be present now (you may need to reformat the code inside you IDE to not look into a one-liner ;) ):
 
 ```json
 {
@@ -210,10 +210,13 @@ This indicates that the OpenAPI spec generation was successful. Therefore we nee
 ```
 
 
+### Import OpenAPI spec into Kong
+
+First we start the manual process in order to test drive our solution.
 
 ##### Install Insomnia Desinger with Kong Bundle plugin
 
-On a Mac simply (or have a look at https://insomnia.rest):
+On a Mac simply use brew (or have a look at https://insomnia.rest):
 
 ```
 brew cask install insomnia-designer
@@ -222,6 +225,68 @@ brew cask install insomnia-designer
 Then go to https://insomnia.rest/plugins/insomnia-plugin-kong-bundle and click on `Install in Designer` & open the request in Insomnia Desinger:
 
 ![insomnia-designer-kong-bundle-plugin](screenshots/insomnia-designer-kong-bundle-plugin.png)
+
+
+##### Import Springdoc generated openapi.json into Insomnia Designer
+
+Now let's try to import the generated [openapi.json](weatherbackend/target/openapi.json) into our Insomnia Designer by clicking on `Create` and then `Import from / File`:
+
+![insomnia-designer-import-openapi-json](screenshots/insomnia-designer-import-openapi-json.png)
+
+That was easy :) Now you can already interact with your API through Insomnia.
+
+
+
+##### Generate Kong Declarative Config from Openapi
+
+The next step is to generate the Kong configuration from the OpenAPI specification. Therefore we need to click on the `Generate Config` button:
+
+![insomnia-designer-kong-declarative-config](screenshots/insomnia-designer-kong-declarative-config.png)
+
+And voilà we have our Kong declarative configuration ready:
+
+```yaml
+_format_version: "1.1"
+services:
+  - name: OpenAPI_definition
+    url: http://localhost:8080
+    plugins: []
+    routes:
+      - tags:
+          - OAS3_import
+        name: OpenAPI_definition-path-get
+        methods:
+          - GET
+        paths:
+          - /weather/general/outlook
+        strip_path: false
+      - tags:
+          - OAS3_import
+        name: OpenAPI_definition-path_1-post
+        methods:
+          - POST
+        paths:
+          - /weather/general/outlook
+        strip_path: false
+      - tags:
+          - OAS3_import
+        name: OpenAPI_definition-path_2-get
+        methods:
+          - GET
+        paths:
+          - /weather/(?<name>\S+)$
+        strip_path: false
+    tags:
+      - OAS3_import
+upstreams:
+  - name: OpenAPI_definition
+    targets:
+      - target: localhost:8080
+    tags:
+      - OAS3_import
+
+```
+
 
 
 
