@@ -56,6 +56,110 @@ This is the easy part. We all know where to start: Go to start.spring.io and cre
 And then we need to implement a simple reactive REST service, that is able to serve a simple GET request.
 
 
+### Generate an OpenAPI spec with the springdoc-openapi-maven-plugin
+
+See the docs at https://github.com/springdoc/springdoc-openapi-maven-plugin on how to use the springdoc-openapi-maven-plugin.
+
+> The aim of springdoc-openapi-maven-plugin is to generate json and yaml OpenAPI description during build time. The plugin works during integration-tests phase, and generates the OpenAPI description. The plugin works in conjunction with spring-boot-maven plugin.
+
+But in order to successfully run the springdoc-openapi-maven-plugin, we need to add the [springdoc-openapi-ui](https://github.com/springdoc/springdoc-openapi) plugin (for Tomcat / Spring MVC based apps) or the [springdoc-openapi-webflux-ui](https://github.com/springdoc/springdoc-openapi#spring-webflux-support-with-annotated-controllers) plugin (for Reactive WebFlux / Netty based apps) to our [hellobackend/pom.xml](hellobackend/pom.xml):
+
+```xml
+<dependency>
+    <groupId>org.springdoc</groupId>
+    <artifactId>springdoc-openapi-webflux-ui</artifactId>
+    <version>1.4.8</version>
+</dependency>
+```
+
+Otherwise the `springdoc-openapi-maven-plugin` will run into errors like this (as described [in this so answer](https://stackoverflow.com/a/64677754/4964553)):
+
+```
+[INFO] --- springdoc-openapi-maven-plugin:1.1:generate (default) @ hellobackend ---
+[ERROR] An error has occured: Response code 404
+[INFO]
+[INFO] --- spring-boot-maven-plugin:2.3.5.RELEASE:stop (post-integration-test) @ hellobackend ---
+[INFO] Stopping application...
+2020-11-04 10:18:36.851  INFO 42036 --- [on(4)-127.0.0.1] inMXBeanRegistrar$SpringApplicationAdmin : Application shutdown requested.
+```
+
+Now we can add the `springdoc-openapi-maven-plugin` to our [hellobackend/pom.xml](hellobackend/pom.xml):
+
+```xml
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>pre-integration-test</id>
+						<goals>
+							<goal>start</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>post-integration-test</id>
+						<goals>
+							<goal>stop</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.springdoc</groupId>
+				<artifactId>springdoc-openapi-maven-plugin</artifactId>
+				<version>1.1</version>
+				<executions>
+					<execution>
+						<phase>integration-test</phase>
+						<goals>
+							<goal>generate</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+``` 
+
+As you see we also need to tell the `spring-boot-maven-plugin` to start and stop the integration test phases.
+
+In order to generate the Open API spec we need to execute Maven with:
+
+```
+mvn verify
+```
+
+The output should contain something like that:
+
+```
+...
+[INFO] --- springdoc-openapi-maven-plugin:1.1:generate (default) @ hellobackend ---
+2020-11-04 10:26:09.579  INFO 42143 --- [ctor-http-nio-2] o.springdoc.api.AbstractOpenApiResource  : Init duration for springdoc-openapi is: 29 ms
+...
+```
+
+This indicates that the OpenAPI spec generation was successful. Therefore we need to have a look into the `hellobackend/target` directory, where a file called [openapi.json](hellobackend/target/openapi.json) should be present now (you may need to reformat the code inside you IDE to not look into a one-liner ;) ):
+
+```json
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "OpenAPI definition",
+    "version": "v0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8080",
+      "description": "Generated server url"
+    }
+  ],
+  "paths": {},
+  "components": {}
+}
+```
+
 
 
 ##### Install Insomnia Desinger with Kong Bundle plugin
@@ -79,6 +183,13 @@ Then go to https://insomnia.rest/plugins/insomnia-plugin-kong-bundle and click o
 https://blog.codecentric.de/en/2017/11/api-management-kong/
 
 https://docs.konghq.com/hub/
+
+
+#### Spring & OpenAPI
+
+https://github.com/springdoc/springdoc-openapi-maven-plugin
+
+https://stackoverflow.com/questions/59616165/what-is-the-function-of-springdoc-openapi-maven-plugin-configuration-apidocsurl
 
 
 #### Insomnia (Core) & Insomia Designer
