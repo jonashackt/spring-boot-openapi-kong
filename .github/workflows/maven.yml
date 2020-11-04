@@ -1,4 +1,4 @@
-name: spring-boot-openapi-kong
+name: build
 
 on: [push]
 

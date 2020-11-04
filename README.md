@@ -1,6 +1,6 @@
 # spring-boot-openapi-kong
 
-[![Build Status](https://github.com/jonashackt/spring-boot-openapi-kong/workflows/spring-boot-openapi-kong/badge.svg)](https://github.com/jonashackt/cxf-spring-cloud-netflix-docker/actions)
+[![Build Status](https://github.com/jonashackt/spring-boot-openapi-kong/workflows/build/badge.svg)](https://github.com/jonashackt/spring-boot-openapi-kong/actions)
 [![License](http://img.shields.io/:license-mit-blue.svg)](https://github.com/jonashackt/spring-boot-buildpack/blob/master/LICENSE)
 
 
