@@ -658,8 +658,10 @@ Also our OpenAPI spec file at `weatherbackend/target/openapi.json` could be dire
 The last part is to tell Inso where to output the Kong declarative configuration `--output kong/kong.yml`.
 
 ```
-inso generate config weatherbackend/target/openapi.json --output kong/kong.yml --type declarative
+inso generate config weatherbackend/target/openapi.json --output kong/kong.yml --type declarative --verbose
 ```
+
+If you want to see a bit more of an info what the inso CLI is doing, you can add `--verbose` to the command.
 
 If your node/npm installation is broken like mine, you can add the `node_modules/insomnia-inso/bin` directly to your `.bash_profile`, `.zshrc` etc. like that:
 
@@ -701,6 +703,7 @@ it makes totally sense to have the generation of our `kong.yml` also directly co
 						<argument>../kong/kong.yml</argument>
 						<argument>--type</argument>
 						<argument>declarative</argument>
+                        <argument>--verbose</argument>
 					</arguments>
 				</configuration>
 			</plugin>
@@ -880,8 +883,13 @@ So let's try it! We alter our [weatherbackend/pom.xml](weatherbackend/pom.xml) s
 ...
 ```
 
-With this change we should be able to run our normal `mvn verify` locally - and a special `mvn verify -DskipTests=true -Dinso.executable.path=inso-special-path` on TravisCI.
+With this change we should be able to run our normal `mvn verify` locally - and a special `mvn verify -DskipTests=true -Dinso.executable.path=inso-special-path` on TravisCI like this:
 
+```
+mvn clean verify --file weatherbackend/pom.xml --no-transfer-progress -Dinso.executable.path=node_modules/insomnia-inso/bin/inso
+```
+
+Now [our TravisCI build works like a charm](https://travis-ci.com/github/jonashackt/spring-boot-openapi-kong/builds/198466347) :)
 
 
 

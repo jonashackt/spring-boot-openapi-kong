@@ -102,6 +102,7 @@
 						<argument>../kong/kong.yml</argument>
 						<argument>--type</argument>
 						<argument>declarative</argument>
+						<argument>--verbose</argument>
 					</arguments>
 				</configuration>
 			</plugin>
