@@ -11,10 +11,36 @@ Example project showing how to integrate Spring Boot microservices with Kong API
 
 [![asciicast](https://asciinema.org/a/370557.svg)](https://asciinema.org/a/370557)
 
-
 Bringing together Kong & Spring Boot. But wait, what is https://github.com/Kong/kong ?
 
 > Kong is a cloud-native, fast, scalable, and distributed Microservice Abstraction Layer (also known as an API Gateway or API Middleware). 
+
+
+## Table of Contents 
+
+* [Idea & Setup](#idea--setup)
+* [Step by step...](#step-by-step)
+  * [The current problem with springdoc-openapi and WebFlux based Spring Boot apps](#the-current-problem-with-springdoc-openapi-and-webflux-based-spring-boot-apps)
+  * [Create a Spring Boot App with REST endpoints](#create-a-spring-boot-app-with-rest-endpoints)
+  * [Generate an OpenAPI spec with the springdoc-openapi-maven-plugin](#generate-an-openapi-spec-with-the-springdoc-openapi-maven-plugin)
+  * [Tweak the API information in the generated OpenAPI spec](#tweak-the-api-information-in-the-generated-openapi-spec)
+* [Import OpenAPI spec into Kong](#import-openapi-spec-into-kong)
+  * [Install Insomnia Desinger with Kong Bundle plugin](#install-insomnia-desinger-with-kong-bundle-plugin)
+  * [Import Springdoc generated openapi.json into Insomnia Designer](#import-springdoc-generated-openapijson-into-insomnia-designer)
+  * [Generate Kong Declarative Config from Openapi](#generate-kong-declarative-config-from-openapi)
+* [Docker Compose with Kong DB-less deployment & declarative configuration](#docker-compose-with-kong-db-less-deployment--declarative-configuration)
+* [Access the Spring Boot app through Kong](#access-the-spring-boot-app-through-kong)
+  * [Configuring the correct upstream in Kong (connect() failed (111: Connection refused) while connecting to upstream)](#configuring-the-correct-upstream-in-kong-connect-failed-111-connection-refused-while-connecting-to-upstream)
+* [Automating the OpenAPI-Kong import](#automating-the-openapi-kong-import)
+  * [Install Inso CLI](#install-inso-cli)
+  * [Inso CLI install problems on Mac](#inso-cli-install-problems-on-mac)
+  * [Use Inso CLI to generate Kong declarative config from OpenAPI spec](#use-inso-cli-to-generate-kong-declarative-config-from-openapi-spec)
+  * [Run the OpenAPI spec generation and Kong declarative config transformation inside the Maven build](#run-the-openapi-spec-generation-and-kong-declarative-config-transformation-inside-the-maven-build)
+  * [Integrate the full Maven build into Cloud CI](#integrate-the-full-maven-build-into-cloud-ci)
+  * [Fire up our Kong Docker Compose setup & testdrive the Spring Boot service access](#fire-up-our-kong-docker-compose-setup--testdrive-the-spring-boot-service-access)
+* [Links](#links)
+
+
 
 ### Idea & Setup
 
@@ -310,7 +336,7 @@ With that we can generate our `openapi.json` again by running `mvn verify -Dskip
 
 First we start the manual process in order to test drive our solution.
 
-##### Install Insomnia Desinger with Kong Bundle plugin
+### Install Insomnia Desinger with Kong Bundle plugin
 
 On a Mac simply use brew (or have a look at https://insomnia.rest):
 
