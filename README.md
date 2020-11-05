@@ -8,6 +8,8 @@
 
 Example project showing how to integrate Spring Boot microservices with Kong API Gateway
 
+[![asciicast](https://asciinema.org/a/370557.svg)](https://asciinema.org/a/370557)
+
 
 Bringing together Kong & Spring Boot. But wait, what is https://github.com/Kong/kong ?
 
