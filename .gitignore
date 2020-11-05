@@ -1,6 +1,9 @@
 # Compiled class file
 *.class
 
+# npm
+node_modules
+
 # idea
 .idea
 *.iml

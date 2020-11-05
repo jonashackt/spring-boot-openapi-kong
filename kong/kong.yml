@@ -6,6 +6,7 @@ services:
     routes:
       - tags:
           - OAS3_import
+          - OAS3file_openapi.json
         name: weatherbackend-path-get
         methods:
           - GET
@@ -14,6 +15,7 @@ services:
         strip_path: false
       - tags:
           - OAS3_import
+          - OAS3file_openapi.json
         name: weatherbackend-path_1-post
         methods:
           - POST
@@ -22,6 +24,7 @@ services:
         strip_path: false
       - tags:
           - OAS3_import
+          - OAS3file_openapi.json
         name: weatherbackend-path_2-get
         methods:
           - GET
@@ -30,9 +33,11 @@ services:
         strip_path: false
     tags:
       - OAS3_import
+      - OAS3file_openapi.json
 upstreams:
   - name: weatherbackend
     targets:
       - target: weatherbackend:8080
     tags:
       - OAS3_import
+      - OAS3file_openapi.json

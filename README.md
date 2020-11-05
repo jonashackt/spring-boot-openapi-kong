@@ -609,8 +609,60 @@ We need to also import the OpenAPI spec everytime the code changes, since otherw
 
 Additionally we want to be able to run our process on our CI servers as well, since we're in 2020 and want to be sure everything runs even after code changes.
 
-https://support.insomnia.rest/collection/105-inso-cli
+And there's a way maybe: Inso CLI https://github.com/Kong/insomnia/tree/develop/packages/insomnia-inso
 
+Because there we have a [openapi-2-kong functionality](https://github.com/Kong/insomnia/tree/develop/packages/insomnia-inso#-inso-generate-config-identifier) - see also https://www.npmjs.com/package/openapi-2-kong:
+
+> Similar to the Kong Kubernetes and Declarative config plugins for Designer, this command can generate configuration from an API specification, using openapi-2-kong.
+
+
+### Install Inso CLI
+
+So let's try Inso CLI! (did I say that this starting to get really cool :D )
+
+Install it with:
+
+```shell script
+npm i -g insomnia-inso
+```
+
+#### Inso CLI install problems on Mac
+
+I ran into the following error
+
+```
+node-pre-gyp WARN Using request for node-pre-gyp https download
+  CXX(target) Release/obj.target/node_libcurl/src/node_libcurl.o
+clang: error: no such file or directory: '/usr/include'
+```
+
+This is a problem, since [MacOS command line tools do not add `/usr/include` folder by default anymore](https://stackoverflow.com/questions/64694248/node-libcurl-installation-fails-on-macos-catalina-clang-error-no-such-file-or/64694249#64694249) (OMG!).
+
+In order to fix that problem, you need to install `node_libcurl` (which has the above problem and is needed by insomnia-inso) first and use the environment variable `npm_config_curl_include_dirs` to show the installation process the new location of `/usr/include` which is `$(xcrun --show-sdk-path)/usr/include`. The command must also include `insomnia-inso`:
+
+```
+npm_config_curl_include_dirs="$(xcrun --show-sdk-path)/usr/include" npm install -g node-libcurl insomnia-inso
+```
+
+### Use Inso CLI to generate Kong declarative config from OpenAPI spec
+
+As we want to go from `openapi.json` to `kong.yml`, we need to [use the `inso generate config` command as described in the docs](https://github.com/Kong/insomnia/tree/develop/packages/insomnia-inso#-inso-generate-config-identifier).
+
+We should also use option `--type declarative`, since the output should result in a Kong declarative configuration file.
+
+Also our OpenAPI spec file at `weatherbackend/target/openapi.json` could be directly passed to Inso CLI. 
+
+The last part is to tell Inso where to output the Kong declarative configuration `--output kong/kong.yml`.
+
+```
+inso generate config weatherbackend/target/openapi.json --output kong/kong.yml --type declarative
+```
+
+If your node/npm installation is broken like mine, you can add the `node_modules/insomnia-inso/bin` directly to your `.bash_profile`, `.zshrc` etc. like that:
+
+```
+export PATH="/usr/local/Cellar/node/15.1.0/lib/node_modules/insomnia-inso/bin:$PATH"
+```
 
 
 
