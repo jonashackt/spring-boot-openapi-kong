@@ -25,5 +25,5 @@ script:
   # Build Spring Boot app with Maven
   # This also generates OpenAPI spec file at weatherbackend/target/openapi.json
   # and the Kong declarative config at kong/kong.yml from the OpenAPI spec with Inso CLI
-  - mvn clean verify --file weatherbackend/pom.xml --no-transfer-progress -Dinso.executable.path=/home/travis/node_modules/insomnia-inso/bin/inso`
+  - mvn clean verify --file weatherbackend/pom.xml --no-transfer-progress -Dinso.executable.path=node_modules/insomnia-inso/bin/inso
 
