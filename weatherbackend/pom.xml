@@ -78,6 +78,32 @@
 					</execution>
 				</executions>
 			</plugin>
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>exec-maven-plugin</artifactId>
+				<version>3.0.0</version>
+				<executions>
+					<execution>
+						<id>execute-inso-cli</id>
+						<phase>verify</phase>
+						<goals>
+							<goal>exec</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<executable>inso</executable>
+					<arguments>
+						<argument>generate</argument>
+						<argument>config</argument>
+						<argument>target/openapi.json</argument>
+						<argument>--output</argument>
+						<argument>../kong/kong.yml</argument>
+						<argument>--type</argument>
+						<argument>declarative</argument>
+					</arguments>
+				</configuration>
+			</plugin>
 		</plugins>
 	</build>
 

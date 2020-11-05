@@ -667,6 +667,153 @@ export PATH="/usr/local/Cellar/node/15.1.0/lib/node_modules/insomnia-inso/bin:$P
 ```
 
 
+### Run the OpenAPI spec generation and Kong declarative config transformation inside the Maven build
+
+Everytime we change our Spring Boot app's code, we should initialize a re-generation of our Kong declarative config in our `kong.yml` file, since the API could have changed!
+
+Playing with different possibilities where to put the generation (Docker, Compose, CI server) I found a really simple solution to bind the step to our standard build process:
+
+I just used the [exec-maven-plugin](https://www.mojohaus.org/exec-maven-plugin/usage.html) to execute the `inso CLI`. Although the XML syntax may look a bit strange at first sight,
+it makes totally sense to have the generation of our `kong.yml` also directly coupled to our build process. Therefore let's have a look at our [weatherbackend/pom.xml](weatherbackend/pom.xml):
+
+```xml
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>exec-maven-plugin</artifactId>
+				<version>3.0.0</version>
+				<executions>
+					<execution>
+						<id>execute-inso-cli</id>
+						<phase>verify</phase>
+						<goals>
+							<goal>exec</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<executable>inso</executable>
+					<arguments>
+						<argument>generate</argument>
+						<argument>config</argument>
+						<argument>target/openapi.json</argument>
+						<argument>--output</argument>
+						<argument>../kong/kong.yml</argument>
+						<argument>--type</argument>
+						<argument>declarative</argument>
+					</arguments>
+				</configuration>
+			</plugin>
+```
+
+Using `mvn exec:exec` we are now able to execute `inso CLI` through Maven:
+
+```
+$ mvn exec:exec
+[INFO] Scanning for projects...
+[INFO]
+[INFO] ------------< io.jonashackt.weatherbackend:weatherbackend >-------------
+[INFO] Building weatherbackend 2.3.5.RELEASE
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO]
+[INFO] --- exec-maven-plugin:3.0.0:exec (default-cli) @ weatherbackend ---
+Configuration generated to "kong/kong.yml".
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  1.671 s
+[INFO] Finished at: 2020-11-05T14:05:04+01:00
+[INFO] ------------------------------------------------------------------------
+```
+
+As you can see the `inso CLI` output `Configuration generated to "kong/kong.yml".` is part of the output.
+
+And we can push the integration into our build process even further: As [mentioned from Pascal at stackoverflow](https://stackoverflow.com/a/2472767/4964553) we can even bind the execution of the `exec-maven-plugin` to the standard Maven build.
+
+Using the `<phase>` tag we bind the execution to the `verify` phase, where the generation of the OpenAPI spec also takes place already:
+
+```xml
+<executions>
+    <execution>
+        <id>execute-inso-cli</id>
+        <phase>verify</phase>
+        <goals>
+            <goal>exec</goal>
+        </goals>
+    </execution>
+</executions>
+```
+
+This is marvelous since with this addition a normal `mvn verify` does every needed step for us to generate a Kong declarative config file at [kong/kong.yml](kong/kong.yml)! 
+
+```shell script
+$ mvn verify
+...
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 3.822 s - in io.jonashackt.weatherbackend.api.WeatherBackendAPITests
+2020-11-05 14:07:49.261  INFO 66585 --- [extShutdownHook] o.s.s.concurrent.ThreadPoolTaskExecutor  : Shutting down ExecutorService 'applicationTaskExecutor'
+[INFO]
+[INFO] Results:
+[INFO]
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
+[INFO]
+[INFO]
+[INFO] --- maven-jar-plugin:3.2.0:jar (default-jar) @ weatherbackend ---
+[INFO] Building jar: /Users/jonashecht/dev/spring-boot/spring-boot-openapi-kong/weatherbackend/target/weatherbackend-2.3.5.RELEASE.jar
+[INFO]
+[INFO] --- spring-boot-maven-plugin:2.3.5.RELEASE:repackage (repackage) @ weatherbackend ---
+[INFO] Replacing main artifact with repackaged archive
+[INFO]
+[INFO] --- spring-boot-maven-plugin:2.3.5.RELEASE:start (pre-integration-test) @ weatherbackend ---
+[INFO] Attaching agents: []
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+ :: Spring Boot ::        (v2.3.5.RELEASE)
+
+2020-11-05 14:07:50.978  INFO 66597 --- [           main] i.j.w.WeatherBackendApplication          : Starting WeatherBackendApplication on PikeBook.fritz.box with PID 66597 (/Users/jonashecht/dev/spring-boot/spring-boot-openapi-kong/weatherbackend/target/classes started by jonashecht in /Users/jonashecht/dev/spring-boot/spring-boot-openapi-kong/weatherbackend)
+2020-11-05 14:07:50.981  INFO 66597 --- [           main] i.j.w.WeatherBackendApplication          : No active profile set, falling back to default profiles: default
+2020-11-05 14:07:51.657  INFO 66597 --- [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port(s): 8080 (http)
+2020-11-05 14:07:51.665  INFO 66597 --- [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2020-11-05 14:07:51.665  INFO 66597 --- [           main] org.apache.catalina.core.StandardEngine  : Starting Servlet engine: [Apache Tomcat/9.0.39]
+2020-11-05 14:07:51.735  INFO 66597 --- [           main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2020-11-05 14:07:51.736  INFO 66597 --- [           main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 715 ms
+2020-11-05 14:07:51.889  INFO 66597 --- [           main] o.s.s.concurrent.ThreadPoolTaskExecutor  : Initializing ExecutorService 'applicationTaskExecutor'
+2020-11-05 14:07:52.292  INFO 66597 --- [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port(s): 8080 (http) with context path ''
+2020-11-05 14:07:52.300  INFO 66597 --- [           main] i.j.w.WeatherBackendApplication          : Started WeatherBackendApplication in 1.585 seconds (JVM running for 1.978)
+[INFO]
+[INFO] --- springdoc-openapi-maven-plugin:1.1:generate (default) @ weatherbackend ---
+2020-11-05 14:07:52.764  INFO 66597 --- [nio-8080-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2020-11-05 14:07:52.764  INFO 66597 --- [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2020-11-05 14:07:52.768  INFO 66597 --- [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 4 ms
+2020-11-05 14:07:52.936  INFO 66597 --- [nio-8080-exec-1] o.springdoc.api.AbstractOpenApiResource  : Init duration for springdoc-openapi is: 148 ms
+[INFO]
+[INFO] --- spring-boot-maven-plugin:2.3.5.RELEASE:stop (post-integration-test) @ weatherbackend ---
+[INFO] Stopping application...
+2020-11-05 14:07:52.989  INFO 66597 --- [on(4)-127.0.0.1] inMXBeanRegistrar$SpringApplicationAdmin : Application shutdown requested.
+2020-11-05 14:07:53.052  INFO 66597 --- [on(4)-127.0.0.1] o.s.s.concurrent.ThreadPoolTaskExecutor  : Shutting down ExecutorService 'applicationTaskExecutor'
+[INFO]
+[INFO] --- exec-maven-plugin:3.0.0:exec (execute-inso-cli) @ weatherbackend ---
+Configuration generated to "../kong/kong.yml".
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  11.185 s
+[INFO] Finished at: 2020-11-05T14:07:54+01:00
+[INFO] ------------------------------------------------------------------------
+```
+
+With that our Spring Boot app is build & tested, then the `openapi.json` gets generated using the `springdoc-openapi-maven-plugin` and then transformed into `kong.yml` by the `Inso CLI` executed by the `exec-maven-plugin` :))) 
+
+
+
+### Run the OpenAPI spec generation and Kong declarative config transformation on every code change
+
+As we only start Kong through Docker Compose, we should ensure, that every `docker-compose up` starts with the latest API definition. 
+
+
 
 ## Links
 
