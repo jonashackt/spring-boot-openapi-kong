@@ -13,8 +13,7 @@ Bringing together Kong & Spring Boot. But wait, what is https://github.com/Kong/
 
 > Kong is a cloud-native, fast, scalable, and distributed Microservice Abstraction Layer (also known as an API Gateway or API Middleware). 
 
-
-### Step by step...
+### Idea & Setup
 
 Some microservices to access with Kong... I once worked heavily with the Spring Cloud Netflix tooling.
 
@@ -23,19 +22,9 @@ Here's the example project: https://github.com/jonashackt/cxf-spring-cloud-netfl
 The goal is to rebuild the project using Kong https://github.com/Kong/kong
 
 
-### Idea & Setup
-
-Konga GUI
-
-docker-compose
-
-Integration: OpenAPI - Spring - Kong - Insomnia Designer
-
-
-
 agnostical! more pattern like
 
-Setup idea: Spring Boot REST / WebFlux --> [generate OpenAPI spec yamls via springdoc-openapi-maven-plugin](https://www.baeldung.com/spring-rest-openapi-documentation) --> Insomnia config file with [Kong Bundle plugin](https://insomnia.rest/plugins/insomnia-plugin-kong-bundle/) --> import into Kong and run via decK (normal Kong gateway without EE)
+Setup idea: Spring Boot REST --> [generate OpenAPI spec yamls via springdoc-openapi-maven-plugin](https://www.baeldung.com/spring-rest-openapi-documentation) --> Insomnia: Kong config file with [Kong Bundle plugin](https://insomnia.rest/plugins/insomnia-plugin-kong-bundle/) --> import into Kong and run via decK (normal Kong gateway without EE)
 
 Nothing really there right now:  https://www.google.com/search?q=openapi+spring+boot+kong
 
@@ -44,28 +33,15 @@ Nothing really there right now:  https://www.google.com/search?q=openapi+spring+
 
 PLUS: CI process to regularly generate OpenAPI specs from Spring code -> and automatically import into Kong, which is an enterprise feature - or it is possible via:
 
-Insomnia Inso CLI (https://support.insomnia.rest/collection/105-inso-cli)
-
-See "From OpenAPI spec to configuration as code" in https://blog.codecentric.de/en/2020/09/offloading-and-more-from-reedelk-data-integration-services-through-kong-enterprise/
-
-
-Next:
-(backwards: OpenAPI --> Kong --> code)
 
 
 
+## Step by step...
 
 
-### Create a Spring Boot App with REST endpoints
+### The current problem with springdoc-openapi and WebFlux based Spring Boot apps
 
-This is the easy part. We all know where to start: Go to start.spring.io and create a Spring REST app skeleton.
-
-As I wanted to rebuild my good old Spring Cloud Netflix / Eureka based apps, I simply too the `weatherbackend` app from https://github.com/jonashackt/cxf-spring-cloud-netflix-docker/tree/master/weatherbackend
-
-But why didn't I go with a reactive WebFlux based app? 
-
-
-##### The current problem with springdoc-openapi and WebFlux based Spring Boot apps
+Why didn't I go with a reactive WebFlux based app? 
 
 WebFlux based Spring Boot Apps need some `springdoc-openapi` specific classes right now in order to fully generate the OpenAPI live documentation in the end. See the demos at
 
@@ -80,6 +56,58 @@ import static org.springdoc.webflux.core.fn.SpringdocRouteBuilder.route;
 ```
 
 I can fully discourage to go with this approach, but for this project I wanted a 100% "springdoc-free" standard Spring Boot app, where the springdoc feature are __ONLY__ used to generate OpenAPI specs - and not rely onto some dependencies from springdoc. Since that would imply that every Spring Boot project that wanted to adopt the solution outlined here would need to integrate springdoc classes in their projects.
+
+
+
+### Create a Spring Boot App with REST endpoints
+
+This is the easy part. We all know where to start: Go to start.spring.io and create a Spring REST app skeleton.
+
+As I wanted to rebuild my good old Spring Cloud Netflix / Eureka based apps, I simply took the `weatherbackend` app from https://github.com/jonashackt/cxf-spring-cloud-netflix-docker/tree/master/weatherbackend
+
+Here's the [WeatherBackendAPI.java](weatherbackend/src/main/java/io/jonashackt/weatherbackend/api/WeatherBackendAPI.java) - nothing special here:
+
+```java
+package io.jonashackt.weatherbackend.api;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.jonashackt.weatherbackend.businesslogic.IncredibleLogic;
+import io.jonashackt.weatherbackend.model.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/weather")
+public class WeatherBackendAPI {
+
+    private static final Logger LOG = LoggerFactory.getLogger(WeatherBackendController.class);
+
+    private ObjectMapper objectMapper = new ObjectMapper();;
+
+    @RequestMapping(path = "/general/outlook", method=RequestMethod.POST, produces="application/json")
+    @ResponseStatus(HttpStatus.OK)
+    public @ResponseBody GeneralOutlook generateGeneralOutlook(@RequestBody Weather weather) throws JsonProcessingException {
+        ...
+        return outlook;
+    }
+
+    @RequestMapping(path = "/general/outlook", method=RequestMethod.GET, produces="application/json")
+    @ResponseStatus(HttpStatus.OK)
+    public @ResponseBody String infoAboutGeneralOutlook() throws JsonProcessingException {
+        ...
+        return "Try a POST also against this URL! Just send some body with it like: '" + weatherJson + "'";
+    }
+
+    @RequestMapping(value = "/{name}", method = RequestMethod.GET, produces = "text/plain")
+    public String whatsTheSenseInThat(@PathVariable("name") String name) {
+        LOG.info("Request for /{name} with GET");
+        return "Hello " + name + "! This is a RESTful HttpService written in Spring. :)";
+    }
+}
+```
 
 
 
@@ -209,6 +237,71 @@ This indicates that the OpenAPI spec generation was successful. Therefore we nee
 }}}
 ```
 
+### Tweak the API information in the generated OpenAPI spec
+
+I really don't wanted to change much here in the first place. But as I came into more details regarding the Kong integration, I wanted to configure at least some information in the generated `openapi.json`.
+
+Especially the `"title": "OpenAPI definition"`, which is then used as the Kong service name, should be optimized :)
+
+Therefore we can [use the @OpenAPIDefinition annotation](https://github.com/springdoc/springdoc-openapi#adding-api-information-and-security-documentation) to configure the service info.
+
+So let's create a class [OpenAPIConfig.java](weatherbackend/src/main/java/io/jonashackt/weatherbackend/api/OpenAPIConfig.java) and specify some info:
+
+```java
+package io.jonashackt.weatherbackend.api;
+
+import io.swagger.v3.oas.annotations.OpenAPIDefinition;
+import io.swagger.v3.oas.annotations.info.Info;
+import io.swagger.v3.oas.annotations.servers.Server;
+
+@OpenAPIDefinition(
+        info = @Info(
+                title = "weatherbackend",
+                version = "v2.0"
+        ),
+        servers = @Server(url = "http://weatherbackend:8080")
+)
+public class OpenAPIConfig {
+}
+```
+
+With that we can generate our `openapi.json` again by running `mvn verify -DskipTests=true` and should have the new information propagated:
+
+```json
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "weatherbackend",
+    "version": "v2.0"
+  },
+  "servers": [
+    {
+      "url": "http://weatherbackend:8080",
+      "variables": {}
+    }
+  ],
+  "paths": {
+    "/weather/general/outlook": {
+      "get": {
+        "tags": [
+          "weather-backend-api"
+        ],
+        "operationId": "infoAboutGeneralOutlook",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+```
+
 
 ### Import OpenAPI spec into Kong
 
@@ -248,13 +341,13 @@ And voilà we have our Kong declarative configuration ready:
 ```yaml
 _format_version: "1.1"
 services:
-  - name: OpenAPI_definition
-    url: http://localhost:8080
+  - name: weatherbackend
+    url: http://weatherbackend:8080
     plugins: []
     routes:
       - tags:
           - OAS3_import
-        name: OpenAPI_definition-path-get
+        name: weatherbackend-path-get
         methods:
           - GET
         paths:
@@ -262,7 +355,7 @@ services:
         strip_path: false
       - tags:
           - OAS3_import
-        name: OpenAPI_definition-path_1-post
+        name: weatherbackend-path_1-post
         methods:
           - POST
         paths:
@@ -270,7 +363,7 @@ services:
         strip_path: false
       - tags:
           - OAS3_import
-        name: OpenAPI_definition-path_2-get
+        name: weatherbackend-path_2-get
         methods:
           - GET
         paths:
@@ -279,12 +372,11 @@ services:
     tags:
       - OAS3_import
 upstreams:
-  - name: OpenAPI_definition
+  - name: weatherbackend
     targets:
-      - target: localhost:8080
+      - target: weatherbackend:8080
     tags:
       - OAS3_import
-
 ```
 
 For now let's save this yaml inside the [kong/kong.yml](kong/kong.yml) file.
@@ -407,8 +499,8 @@ weatherbackend_1  |   '  |____| .__|_| |_|_| |_\__, | / / / /
 weatherbackend_1  |  =========|_|==============|___/=/_/_/_/
 weatherbackend_1  |  :: Spring Boot ::        (v2.3.5.RELEASE)
 weatherbackend_1  |
-weatherbackend_1  | 2020-11-04 14:21:13.226  INFO 6 --- [           main] io.jonashackt.WeatherBackendApplication  : Starting WeatherBackendApplication v2.3.5.RELEASE on 209e8a7cbb36 with PID 6 (/app.jar started by root in /)
-weatherbackend_1  | 2020-11-04 14:21:13.239  INFO 6 --- [           main] io.jonashackt.WeatherBackendApplication  : No active profile set, falling back to default profiles: default
+weatherbackend_1  | 2020-11-04 14:21:13.226  INFO 6 --- [           main] io.jonashackt.weatherbackend.WeatherBackendApplication  : Starting WeatherBackendApplication v2.3.5.RELEASE on 209e8a7cbb36 with PID 6 (/app.jar started by root in /)
+weatherbackend_1  | 2020-11-04 14:21:13.239  INFO 6 --- [           main] io.jonashackt.weatherbackend.WeatherBackendApplication  : No active profile set, falling back to default profiles: default
 weatherbackend_1  | 2020-11-04 14:21:15.920  INFO 6 --- [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port(s): 8080 (http)
 weatherbackend_1  | 2020-11-04 14:21:15.958  INFO 6 --- [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
 weatherbackend_1  | 2020-11-04 14:21:15.960  INFO 6 --- [           main] org.apache.catalina.core.StandardEngine  : Starting Servlet engine: [Apache Tomcat/9.0.39]
@@ -416,7 +508,7 @@ weatherbackend_1  | 2020-11-04 14:21:16.159  INFO 6 --- [           main] o.a.c.
 weatherbackend_1  | 2020-11-04 14:21:16.163  INFO 6 --- [           main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 2714 ms
 weatherbackend_1  | 2020-11-04 14:21:16.813  INFO 6 --- [           main] o.s.s.concurrent.ThreadPoolTaskExecutor  : Initializing ExecutorService 'applicationTaskExecutor'
 weatherbackend_1  | 2020-11-04 14:21:18.534  INFO 6 --- [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port(s): 8080 (http) with context path ''
-weatherbackend_1  | 2020-11-04 14:21:18.564  INFO 6 --- [           main] io.jonashackt.WeatherBackendApplication  : Started WeatherBackendApplication in 7.188 seconds (JVM running for 8.611)
+weatherbackend_1  | 2020-11-04 14:21:18.564  INFO 6 --- [           main] io.jonashackt.weatherbackend.WeatherBackendApplication  : Started WeatherBackendApplication in 7.188 seconds (JVM running for 8.611)
 kong_1            | 172.19.0.1 - - [04/Nov/2020:14:25:16 +0000] "GET / HTTP/1.1" 404 48 "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:82.0) Gecko/20100101 Firefox/82.0"
 ```
 
@@ -444,12 +536,13 @@ Therefore let's have a look into the list of all currently registered Kong servi
 
 You can also access the Kong routes of our Spring Boot-backed service with this URL:
 
-http://localhost:8001/services/OpenAPI_definition/routes 
+http://localhost:8001/services/weatherbackend/routes
 
 
-Now we can use Postman, Insomnia Core or the like to access our Spring Boot app with a GET on http://localhost:8000/weather/Jonas
 
-But right now I run into problems here:
+### Configuring the correct upstream in Kong (connect() failed (111: Connection refused) while connecting to upstream)
+
+If you run into problems like this:
 
 ```
 kong_1            | 2020/11/04 18:56:05 [error] 24#0: *14486 connect() failed (111: Connection refused) while connecting to upstream, client: 172.19.0.1, server: kong, request: "GET /weather/Jonas HTTP/1.1", upstream: "http://127.0.0.1:8080/weather/Jonas", host: "localhost:8000"
@@ -457,7 +550,56 @@ kong_1            | 2020/11/04 18:56:05 [error] 24#0: *14486 connect() failed (1
 kong_1            | 172.19.0.1 - - [04/Nov/2020:18:56:05 +0000] "GET /weather/Jonas HTTP/1.1" 502 75 "-" "insomnia/2020.4.2"
 ```
 
+we should have a look at the `upstreams` configuration of our generated Kong declarative config:
 
+```yaml
+upstreams:
+  - name: weatherbackend
+    targets:
+      - target: localhost:8080
+    tags:
+      - OAS3_import
+```
+
+As with our setup here Kong needs to access the weatherbackend from within the Docker network. So the `upstreams: target` to `localhost` will not work and lead to the error `connect() failed (111: Connection refused) while connecting to upstream`.
+
+So we need to think about a working `host` configuration. [Daniel did the trick](https://blog.codecentric.de/en/2019/09/api-management-kong-update/) to simply use `host.docker.internal` as host name in his post and I also remember it from my last work with Traefik.
+
+Coming from this solution I thought about my [post about the Spring Cloud microservice setup](https://blog.codecentric.de/en/2017/05/ansible-docker-windows-containers-scaling-spring-cloud-netflix-docker-compose) back in 2017: There I simply used the Docker (Compose) service names, which I aligned with the names of the microservices.
+
+So having a look into our [docker-compose.yml](docker-compose.yml) it would be easy to simply use `weatherbackend` as the host name, since that one should be also available inside the Docker network. And: We can enrich this later by using a DNS resolver and so on...
+
+In order to configure another host name inside Kong, we need to tweak our [OpenAPIConfig.java](weatherbackend/src/main/java/io/jonashackt/weatherbackend/api/OpenAPIConfig.java) with another configuration option called `servers`:
+
+```java
+@OpenAPIDefinition(
+        info = @Info(
+                title = "weatherbackend",
+                version = "v2.0"
+        ),
+        servers = @Server(url = "http://weatherbackend:8080")
+)
+public class OpenAPIConfig {
+}
+```    
+
+Now doing the OpenAPI spec and Kong declarative config generation again, our setup should come up with a working configuration to access our Spring Boot service through Kong!
+
+
+Finally we can use Postman, Insomnia Core or the like to access our Spring Boot app with a GET on http://localhost:8000/weather/MaxTheKongUser
+
+![service-access-postman-success](screenshots/service-access-postman-success.png)
+
+Looking into our Docker Compose log we should also see the successful responses from our `weatherbackend` service:
+
+```shell script
+weatherbackend_1  | 2020-11-05 07:54:48.381  INFO 7 --- [nio-8080-exec-1] i.j.controller.WeatherBackendController  : Request for /{name} with GET
+kong_1            | 172.19.0.1 - - [05/Nov/2020:07:54:48 +0000] "GET /weather/MaxTheKongUser HTTP/1.1" 200 133 "-" "PostmanRuntime/7.26.1"
+weatherbackend_1  | 2020-11-05 07:54:59.951  INFO 7 --- [nio-8080-exec-2] i.j.controller.WeatherBackendController  : Request for /{name} with GET
+kong_1            | 172.19.0.1 - - [05/Nov/2020:07:54:59 +0000] "GET /weather/MonicaTheKongUser HTTP/1.1" 200 136 "-" "PostmanRuntime/7.26.1"
+weatherbackend_1  | 2020-11-05 07:55:06.573  INFO 7 --- [nio-8080-exec-3] i.j.controller.WeatherBackendController  : Request for /{name} with GET
+kong_1            | 172.19.0.1 - - [05/Nov/2020:07:55:06 +0000] "GET /weather/MartinTheKongUser HTTP/1.1" 200 136 "-" "PostmanRuntime/7.26.1"
+``` 
 
 
 

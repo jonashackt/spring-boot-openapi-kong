@@ -1,12 +1,12 @@
 _format_version: "1.1"
 services:
-  - name: OpenAPI_definition
-    url: http://localhost:8080
+  - name: weatherbackend
+    url: http://weatherbackend:8080
     plugins: []
     routes:
       - tags:
           - OAS3_import
-        name: OpenAPI_definition-path-get
+        name: weatherbackend-path-get
         methods:
           - GET
         paths:
@@ -14,7 +14,7 @@ services:
         strip_path: false
       - tags:
           - OAS3_import
-        name: OpenAPI_definition-path_1-post
+        name: weatherbackend-path_1-post
         methods:
           - POST
         paths:
@@ -22,7 +22,7 @@ services:
         strip_path: false
       - tags:
           - OAS3_import
-        name: OpenAPI_definition-path_2-get
+        name: weatherbackend-path_2-get
         methods:
           - GET
         paths:
@@ -31,8 +31,8 @@ services:
     tags:
       - OAS3_import
 upstreams:
-  - name: OpenAPI_definition
+  - name: weatherbackend
     targets:
-      - target: localhost:8080
+      - target: weatherbackend:8080
     tags:
       - OAS3_import
