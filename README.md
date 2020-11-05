@@ -851,6 +851,37 @@ node_js:
   - 15
 ``` 
 
+I also ran into another problem. TravisCI couldn't find the `inso` executable (see this build) and produced the following error:
+
+```
+ERROR] Failed to execute goal org.codehaus.mojo:exec-maven-plugin:3.0.0:exec (execute-inso-cli) on project weatherbackend: Command execution failed.: Cannot run program "inso" (in directory "/home/travis/build/jonashackt/spring-boot-openapi-kong/weatherbackend"): error=2, No such file or directory -> [Help 1]
+```
+
+So I thought about directly defining the full path to the `inso` executable inside our Maven build. But using the `exec-maven-plugin` - and not the command line directly - this isn't that easy anymore.
+
+But maybe we can define a default - and override it on Travis? I looked [at this so q&a](https://stackoverflow.com/questions/34746347/pom-xml-environment-variable-with-default-fallback) and finally [at this answer](https://stackoverflow.com/a/13709976/4964553).
+
+So let's try it! We alter our [weatherbackend/pom.xml](weatherbackend/pom.xml) slightly to use a new property called `${inso.executable.path}`:
+
+```xml
+<properties>
+    ...
+    <inso.executable.path>inso</inso.executable.path>
+</properties>
+...
+<plugin>
+    <groupId>org.codehaus.mojo</groupId>
+    <artifactId>exec-maven-plugin</artifactId>
+    <version>3.0.0</version>
+...
+    <configuration>
+        <executable>${inso.executable.path}</executable>
+        <arguments>
+...
+```
+
+With this change we should be able to run our normal `mvn verify` locally - and a special `mvn verify -DskipTests=true -Dinso.executable.path=inso-special-path` on TravisCI.
+
 
 
 

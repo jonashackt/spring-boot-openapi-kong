@@ -15,6 +15,7 @@
 
 	<properties>
 		<java.version>11</java.version>
+		<inso.executable.path>inso</inso.executable.path>
 	</properties>
 
 	<dependencies>
@@ -92,7 +93,7 @@
 					</execution>
 				</executions>
 				<configuration>
-					<executable>inso</executable>
+					<executable>${inso.executable.path}</executable>
 					<arguments>
 						<argument>generate</argument>
 						<argument>config</argument>
