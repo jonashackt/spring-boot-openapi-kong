@@ -27,9 +27,12 @@ script:
   - docker-compose up -d
   - docker ps -a
 
+  # Show kong.yml
+  - cat kong/kong.yml
+
   # Verify that we can call our Spring Boot service through Kong
   - curl http://localhost:8000/weather/MaxTheKongUser
 
   # Also have a look into the Kong logs
-  - docker logs spring-boot-openapi-kong_kong_1
+  - docker-compose logs kon
 
