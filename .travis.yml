@@ -34,5 +34,5 @@ script:
   - curl http://localhost:8000/weather/MaxTheKongUser
 
   # Also have a look into the Kong logs
-  - docker-compose logs kon
+  - docker-compose logs kong
 
