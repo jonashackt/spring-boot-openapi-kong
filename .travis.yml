@@ -31,14 +31,15 @@ script:
   - docker ps -a
 
   # Let's wait until Kong is available (we need to improve this)
-  # see https://docs.travis-ci.com/user/common-build-problems/#build-times-out-because-no-output-was-received
-  # and https://stackoverflow.com/questions/43918874/how-to-increase-no-activity-wait-time-in-travis-ci
-  - travis_wait 1
+  - sleep 10
 
   # Also have a look into the Kong logs
   - docker ps -a
   - docker-compose logs kong
+  - docker-compose logs weatherbackend
 
   # Verify that we can call our Spring Boot service through Kong
   - curl http://localhost:8000/weather/MaxTheKongUser
+
+  - docker-compose logs kong
 

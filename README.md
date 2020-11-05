@@ -927,7 +927,7 @@ All we have to do here is to fire up our setup - and curl Kong with the correct 
 
 We also have a look into the kong logs with `docker-compose logs kong` - but we need to wait for the Compose services to fully boot up.
 
-So right now I use [travis_wait function](https://docs.travis-ci.com/user/common-build-problems/#build-times-out-because-no-output-was-received) to wait [for 1 minute](https://stackoverflow.com/questions/43918874/how-to-increase-no-activity-wait-time-in-travis-ci) (I know we need to improve this :) ).
+So right now I use `sleep` (I know we need to improve this :) ).
 
 Then we finally curl to our service through Kong with `curl http://localhost:8000/weather/MaxTheKongUser`. 
 
