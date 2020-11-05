@@ -817,11 +817,10 @@ Now that we depend on `Inso CLI` installation, which depends on Node.js/NPM and 
 
 As we probably also need Docker Compose on our CI system I decided to go with TravisCI since here we have a full-blown virtual machine to do everything we want.
 
-So let's create a [.travis.yml](.travis.yml) to execute our Maven build:
+So let's create a [.travis.yml](.travis.yml) to execute our Maven build (and don't forget to add `--no-transfer-progress` to the Maven command, since otherwise our build logs get polluted with downloads):
 
 ```yaml
 # use https://docs.travis-ci.com/user/languages/javascript-with-nodejs/ Travis build image
-dist: bionic
 language: node_js
 
 services:
@@ -830,6 +829,7 @@ services:
 script:
   # Install insomnia-inso (Inso CLI) which is needed by our Maven build process later
   - npm install insomnia-inso
+  - inso --version
 
   # Install Java & Maven with SDKMAN
   - curl -s "https://get.sdkman.io" | bash
@@ -840,8 +840,17 @@ script:
   # Build Spring Boot app with Maven
   # This also generates OpenAPI spec file at weatherbackend/target/openapi.json
   # and the Kong declarative config at kong/kong.yml from the OpenAPI spec with Inso CLI
-  - mvn clean verify --file weatherbackend/pom.xml
+  - mvn clean verify --file weatherbackend/pom.xml --no-transfer-progress
 ```
+
+If you're running into strange installation errors of `insomnia-inso`, you may need to upgrade to the latest `node` version available on TravisCI! I [had strange errors like this one](https://travis-ci.com/github/jonashackt/spring-boot-openapi-kong/builds/198453295) and got over it with the following configuration inside the [.travis.yml](.travis.yml):
+
+```yaml
+language: node_js
+node_js:
+  - 15
+``` 
+
 
 
 
