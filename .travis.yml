@@ -11,10 +11,10 @@ script:
 
   # Install insomnia-inso (Inso CLI) which is needed by our Maven build process later
   - npm install insomnia-inso
-  - ls -la node_modules/
+  - ls -la node_modules/insomnia-inso/bin
   - inso --version
-  - /home/travis/node_modules/insomnia-inso/bin/inso --version
-  - ./home/travis/node_modules/insomnia-inso/bin/inso --version
+  - node_modules/insomnia-inso/bin/inso --version
+  - ./node_modules/insomnia-inso/bin/inso --version
 
   # Install Java & Maven with SDKMAN
   - curl -s "https://get.sdkman.io" | bash
