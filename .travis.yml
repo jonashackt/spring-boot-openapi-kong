@@ -23,16 +23,21 @@ script:
   # and the Kong declarative config at kong/kong.yml from the OpenAPI spec with Inso CLI
   - mvn clean verify --file weatherbackend/pom.xml --no-transfer-progress -Dinso.executable.path=node_modules/insomnia-inso/bin/inso
 
+  # Show kong.yml
+  - cat kong/kong.yml
+
   # Fire Up Docker Compose setup with Kong
   - docker-compose up -d
   - docker ps -a
 
-  # Show kong.yml
-  - cat kong/kong.yml
-
-  # Verify that we can call our Spring Boot service through Kong
-  - curl http://localhost:8000/weather/MaxTheKongUser
+  # Let's wait until Kong is available (we need to improve this)
+  # see https://docs.travis-ci.com/user/common-build-problems/#build-times-out-because-no-output-was-received
+  # and https://stackoverflow.com/questions/43918874/how-to-increase-no-activity-wait-time-in-travis-ci
+  - travis_wait 1
 
   # Also have a look into the Kong logs
   - docker-compose logs kong
+
+  # Verify that we can call our Spring Boot service through Kong
+  - curl http://localhost:8000/weather/MaxTheKongUser
 
