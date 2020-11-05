@@ -891,6 +891,12 @@ mvn clean verify --file weatherbackend/pom.xml --no-transfer-progress -Dinso.exe
 
 Now [our TravisCI build works like a charm](https://travis-ci.com/github/jonashackt/spring-boot-openapi-kong/builds/198466347) :)
 
+At the end we also look into the generated [kong/kong.yml](kong/kong.yml):
+
+```yaml
+  # Show kong.yml
+  - cat kong/kong.yml
+```
 
 
 ### Issue a clean new Maven build every time Compose gets fired up
@@ -906,14 +912,24 @@ All we have to do here is to fire up our setup - and curl Kong with the correct 
 ```yaml
   # Fire Up Docker Compose setup with Kong
   - docker-compose up -d
+  - docker ps -a
+
+  # Let's wait until Kong is available (we need to improve this)
+
+  - travis_wait 1
+
+  # Also have a look into the Kong logs
+  - docker-compose logs kong
 
   # Verify that we can call our Spring Boot service through Kong
   - curl http://localhost:8000/weather/MaxTheKongUser
-
-  # Also have a look into the Kong logs
-  - docker logs spring-boot-openapi-kong_kong_1
 ```
 
+We also have a look into the kong logs with `docker-compose logs kong` - but we need to wait for the Compose services to fully boot up.
+
+So right now I use [travis_wait function](https://docs.travis-ci.com/user/common-build-problems/#build-times-out-because-no-output-was-received) to wait [for 1 minute](https://stackoverflow.com/questions/43918874/how-to-increase-no-activity-wait-time-in-travis-ci) (I know we need to improve this :) ).
+
+Then we finally curl to our service through Kong with `curl http://localhost:8000/weather/MaxTheKongUser`. 
 
 
 

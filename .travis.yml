@@ -36,6 +36,7 @@ script:
   - travis_wait 1
 
   # Also have a look into the Kong logs
+  - docker ps -a
   - docker-compose logs kong
 
   # Verify that we can call our Spring Boot service through Kong
