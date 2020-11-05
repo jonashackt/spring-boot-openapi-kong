@@ -1,8 +1,8 @@
-package io.jonashackt.controller;
+package io.jonashackt.weatherbackend.api;
 
-import io.jonashackt.WeatherBackendApplication;
-import io.jonashackt.businesslogic.IncredibleLogic;
-import io.jonashackt.model.*;
+import io.jonashackt.weatherbackend.WeatherBackendApplication;
+import io.jonashackt.weatherbackend.businesslogic.IncredibleLogic;
+import io.jonashackt.weatherbackend.model.*;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import org.apache.http.HttpStatus;
@@ -21,7 +21,7 @@ import static org.junit.Assert.assertEquals;
         classes = WeatherBackendApplication.class,
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT
 )
-public class WeatherBackendControllerTests {
+public class WeatherBackendAPITests {
 
     @LocalServerPort
     int port;

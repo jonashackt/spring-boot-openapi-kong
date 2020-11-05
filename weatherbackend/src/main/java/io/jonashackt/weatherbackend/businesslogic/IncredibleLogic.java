@@ -1,9 +1,9 @@
-package io.jonashackt.businesslogic;
+package io.jonashackt.weatherbackend.businesslogic;
 
 import java.time.Instant;
 import java.util.Date;
 
-import io.jonashackt.model.GeneralOutlook;
+import io.jonashackt.weatherbackend.model.GeneralOutlook;
 
 public class IncredibleLogic {
 

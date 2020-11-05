@@ -1,4 +1,4 @@
-package io.jonashackt.model;
+package io.jonashackt.weatherbackend.model;
 
 public class User {
 

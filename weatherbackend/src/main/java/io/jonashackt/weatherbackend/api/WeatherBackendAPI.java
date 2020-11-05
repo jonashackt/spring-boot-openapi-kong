@@ -1,9 +1,9 @@
-package io.jonashackt.controller;
+package io.jonashackt.weatherbackend.api;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.jonashackt.businesslogic.IncredibleLogic;
-import io.jonashackt.model.*;
+import io.jonashackt.weatherbackend.businesslogic.IncredibleLogic;
+import io.jonashackt.weatherbackend.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -11,9 +11,9 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/weather")
-public class WeatherBackendController {
+public class WeatherBackendAPI {
 
-    private static final Logger LOG = LoggerFactory.getLogger(WeatherBackendController.class);
+    private static final Logger LOG = LoggerFactory.getLogger(WeatherBackendAPI.class);
 
     private ObjectMapper objectMapper = new ObjectMapper();;
 
