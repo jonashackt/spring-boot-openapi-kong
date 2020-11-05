@@ -899,7 +899,7 @@ At the end we also look into the generated [kong/kong.yml](kong/kong.yml):
 ```
 
 
-### Issue a clean new Maven build every time Compose gets fired up
+### Fire up our Kong Docker Compose setup & testdrive the Spring Boot service access
 
 As we only start Kong through Docker Compose, we should finally ensure, that every `docker-compose up` starts with the latest API definition!
 
@@ -912,24 +912,30 @@ All we have to do here is to fire up our setup - and curl Kong with the correct 
 ```yaml
   # Fire Up Docker Compose setup with Kong
   - docker-compose up -d
-  - docker ps -a
 
   # Let's wait until Kong is available (we need to improve this)
+  - sleep 10
 
-  - travis_wait 1
-
-  # Also have a look into the Kong logs
+  # Also have a look into the Kong & Spring Boot app logs
+  - docker ps -a
   - docker-compose logs kong
+  - docker-compose logs weatherbackend
+
+  # Have a look at the /services endpoint of Kong's admin API
+  - curl http://localhost:8001/services
 
   # Verify that we can call our Spring Boot service through Kong
   - curl http://localhost:8000/weather/MaxTheKongUser
+
+  # Again look into Kong logs to see the service call
+  - docker-compose logs kong
 ```
 
-We also have a look into the kong logs with `docker-compose logs kong` - but we need to wait for the Compose services to fully boot up.
+Right after starting `docker-compose up` we need to wait for the containers to spin up. Currently [I use `sleep` here](https://stackoverflow.com/a/47439672/4964553) - it's dead simply, but it works right now :)
 
-So right now I use `sleep` (I know we need to improve this :) ).
+We then also have a look into the Kong & Spring Boot app logs with `docker-compose logs kong` & `docker-compose logs weatherbackend`.
 
-Then we finally curl to our service through Kong with `curl http://localhost:8000/weather/MaxTheKongUser`. 
+After checking the service admin API with `curl http://localhost:8001/services` we finally curl for our service through Kong with `curl http://localhost:8000/weather/MaxTheKongUser`. 
 
 
 

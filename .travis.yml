@@ -28,18 +28,21 @@ script:
 
   # Fire Up Docker Compose setup with Kong
   - docker-compose up -d
-  - docker ps -a
 
   # Let's wait until Kong is available (we need to improve this)
   - sleep 10
 
-  # Also have a look into the Kong logs
+  # Also have a look into the Kong & Spring Boot app logs
   - docker ps -a
   - docker-compose logs kong
   - docker-compose logs weatherbackend
 
+  # Have a look at the /services endpoint of Kong's admin API
+  - curl http://localhost:8001/services
+
   # Verify that we can call our Spring Boot service through Kong
   - curl http://localhost:8000/weather/MaxTheKongUser
 
+  # Again look into Kong logs to see the service call
   - docker-compose logs kong
 
