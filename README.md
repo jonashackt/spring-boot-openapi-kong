@@ -893,12 +893,27 @@ Now [our TravisCI build works like a charm](https://travis-ci.com/github/jonasha
 
 
 
-
 ### Issue a clean new Maven build every time Compose gets fired up
 
 As we only start Kong through Docker Compose, we should finally ensure, that every `docker-compose up` starts with the latest API definition!
 
 Therefore it would be great to initialize a Maven build every time we fire up our Compose setup.
+
+As we now have a CI server, we can also use it to fire up our Compose setup every time the full chain was build and generated!
+
+All we have to do here is to fire up our setup - and curl Kong with the correct service path. So let's add both to our [.travis.yml](.travis.yml):
+
+```yaml
+  # Fire Up Docker Compose setup with Kong
+  - docker-compose up -d
+
+  # Verify that we can call our Spring Boot service through Kong
+  - curl http://localhost:8000/weather/MaxTheKongUser
+
+  # Also have a look into the Kong logs
+  - docker logs spring-boot-openapi-kong_kong_1
+```
+
 
 
 
