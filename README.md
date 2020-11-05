@@ -1,5 +1,6 @@
 # spring-boot-openapi-kong
 
+[![Build Status](https://travis-ci.com/jonashackt/spring-boot-openapi-kong.svg?branch=main)](https://travis-ci.com/jonashackt/spring-boot-openapi-kong)
 [![Build Status](https://github.com/jonashackt/spring-boot-openapi-kong/workflows/build/badge.svg)](https://github.com/jonashackt/spring-boot-openapi-kong/actions)
 [![License](http://img.shields.io/:license-mit-blue.svg)](https://github.com/jonashackt/spring-boot-buildpack/blob/master/LICENSE)
 [![renovateenabled](https://img.shields.io/badge/renovate-enabled-yellow)](https://renovatebot.com)
@@ -725,7 +726,7 @@ Configuration generated to "kong/kong.yml".
 [INFO] ------------------------------------------------------------------------
 ```
 
-As you can see the `inso CLI` output `Configuration generated to "kong/kong.yml".` is part of the output.
+As you can see the `inso CLI` logging `Configuration generated to "kong/kong.yml".` is part of the output.
 
 And we can push the integration into our build process even further: As [mentioned from Pascal at stackoverflow](https://stackoverflow.com/a/2472767/4964553) we can even bind the execution of the `exec-maven-plugin` to the standard Maven build.
 
@@ -808,10 +809,48 @@ Configuration generated to "../kong/kong.yml".
 With that our Spring Boot app is build & tested, then the `openapi.json` gets generated using the `springdoc-openapi-maven-plugin` and then transformed into `kong.yml` by the `Inso CLI` executed by the `exec-maven-plugin` :))) 
 
 
+### Integrate the full Maven build into Cloud CI
 
-### Run the OpenAPI spec generation and Kong declarative config transformation on every code change
+As we want to make sure everything works as expected every time code changes we need to include the build into a CI system.
 
-As we only start Kong through Docker Compose, we should ensure, that every `docker-compose up` starts with the latest API definition. 
+Now that we depend on `Inso CLI` installation, which depends on Node.js/NPM and Maven at the same time, we need go with a very flexible CloudCI solution.
+
+As we probably also need Docker Compose on our CI system I decided to go with TravisCI since here we have a full-blown virtual machine to do everything we want.
+
+So let's create a [.travis.yml](.travis.yml) to execute our Maven build:
+
+```yaml
+# use https://docs.travis-ci.com/user/languages/javascript-with-nodejs/ Travis build image
+dist: bionic
+language: node_js
+
+services:
+  - docker
+
+script:
+  # Install insomnia-inso (Inso CLI) which is needed by our Maven build process later
+  - npm install insomnia-inso
+
+  # Install Java & Maven with SDKMAN
+  - curl -s "https://get.sdkman.io" | bash
+  - source "$HOME/.sdkman/bin/sdkman-init.sh"
+  - sdk install java 15.0.1.hs-adpt
+  - sdk install maven
+
+  # Build Spring Boot app with Maven
+  # This also generates OpenAPI spec file at weatherbackend/target/openapi.json
+  # and the Kong declarative config at kong/kong.yml from the OpenAPI spec with Inso CLI
+  - mvn clean verify --file weatherbackend/pom.xml
+```
+
+
+
+
+### Issue a clean new Maven build every time Compose gets fired up
+
+As we only start Kong through Docker Compose, we should finally ensure, that every `docker-compose up` starts with the latest API definition!
+
+Therefore it would be great to initialize a Maven build every time we fire up our Compose setup.
 
 
 

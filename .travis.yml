@@ -1,0 +1,22 @@
+# use https://docs.travis-ci.com/user/languages/javascript-with-nodejs/ Travis build image
+dist: bionic
+language: node_js
+
+services:
+  - docker
+
+script:
+  # Install insomnia-inso (Inso CLI) which is needed by our Maven build process later
+  - npm install insomnia-inso
+
+  # Install Java & Maven with SDKMAN
+  - curl -s "https://get.sdkman.io" | bash
+  - source "$HOME/.sdkman/bin/sdkman-init.sh"
+  - sdk install java 15.0.1.hs-adpt
+  - sdk install maven
+
+  # Build Spring Boot app with Maven
+  # This also generates OpenAPI spec file at weatherbackend/target/openapi.json
+  # and the Kong declarative config at kong/kong.yml from the OpenAPI spec with Inso CLI
+  - mvn clean verify --file weatherbackend/pom.xml
+
