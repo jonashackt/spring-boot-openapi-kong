@@ -6,7 +6,6 @@ import io.jonashackt.weatherbackend.businesslogic.IncredibleLogic;
 import io.jonashackt.weatherbackend.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -15,10 +14,9 @@ public class WeatherBackendAPI {
 
     private static final Logger LOG = LoggerFactory.getLogger(WeatherBackendAPI.class);
 
-    private ObjectMapper objectMapper = new ObjectMapper();;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
-    @RequestMapping(path = "/general/outlook", method=RequestMethod.POST, produces="application/json")
-    @ResponseStatus(HttpStatus.OK)
+    @PostMapping(value = "/general/outlook", produces = "application/json")
     public @ResponseBody GeneralOutlook generateGeneralOutlook(@RequestBody Weather weather) throws JsonProcessingException {
         LOG.info("Request for /general/outlook with POST");
 
@@ -33,8 +31,7 @@ public class WeatherBackendAPI {
         return outlook;
     }
 
-    @RequestMapping(path = "/general/outlook", method=RequestMethod.GET, produces="application/json")
-    @ResponseStatus(HttpStatus.OK)
+    @GetMapping(value = "/general/outlook", produces = "application/json")
     public @ResponseBody String infoAboutGeneralOutlook() throws JsonProcessingException {
         LOG.info("Request for /general/outlook with GET");
 
@@ -49,9 +46,9 @@ public class WeatherBackendAPI {
         return "Try a POST also against this URL! Just send some body with it like: '" + weatherJson + "'";
     }
 
-    @RequestMapping(value = "/{name}", method = RequestMethod.GET, produces = "text/plain")
+    @GetMapping(value = "/{name}", produces = "text/plain")
     public String whatsTheSenseInThat(@PathVariable("name") String name) {
-        LOG.info("Request for /{name} with GET");
+        LOG.info("Request for /{" + name + "} with GET");
         return "Hello " + name + "! This is a RESTful HttpService written in Spring. Try to use some other HTTP verbs (don´t say 'methods' :P ) :)";
     }
 }

@@ -13,6 +13,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.web.server.LocalServerPort;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import static io.restassured.RestAssured.get;
 import static io.restassured.RestAssured.given;
 import static org.junit.Assert.assertEquals;
 
@@ -59,6 +60,35 @@ public class WeatherBackendAPITests {
 	            .body(weather).post("/weather/general/outlook").as(GeneralOutlook.class);
 	    
 	    assertEquals("Weimar", outlook.getCity());
+    }
+
+    @Test
+    public void should_get_outlook_info() {
+        get("/weather/general/outlook")
+            .then().statusCode(HttpStatus.SC_OK)
+            .contentType(ContentType.JSON)
+            .assertThat().equals("Try a POST also against this URL! Just send some body with it like: '{\n" +
+                "    \"postalCode\": \"99425\",\n" +
+                "    \"flagColor\": \"blue\",\n" +
+                "    \"product\": \"ForecastBasic\",\n" +
+                "    \"users\": [\n" +
+                "        {\n" +
+                "            \"age\": 55,\n" +
+                "            \"contribution\": 5634500,\n" +
+                "            \"methodOfPayment\": \"Bitcoin\"\n" +
+                "        }\n" +
+                "    ]\n" +
+                "}'");
+    }
+
+    @Test
+    public void should_get_named_response() {
+        get("/weather/norbert")
+        .then()
+            .statusCode(HttpStatus.SC_OK)
+            .contentType(ContentType.TEXT)
+            .assertThat()
+                .equals("Hello norbert! This is a RESTful HttpService written in Spring. Try to use some other HTTP verbs (don´t say 'methods' :P ) :)");
     }
 
 }

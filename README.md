@@ -84,7 +84,7 @@ import static org.springdoc.core.fn.builders.parameter.Builder.parameterBuilder;
 import static org.springdoc.webflux.core.fn.SpringdocRouteBuilder.route;
 ```
 
-I can fully discourage to go with this approach, but for this project I wanted a 100% "springdoc-free" standard Spring Boot app, where the springdoc feature are __ONLY__ used to generate OpenAPI specs - and not rely onto some dependencies from springdoc. Since that would imply that every Spring Boot project that wanted to adopt the solution outlined here would need to integrate springdoc classes in their projects.
+I can't fully discourage to go with this approach, but for this project I wanted a 100% "springdoc-free" standard Spring Boot app, where the springdoc feature are __ONLY__ used to generate OpenAPI specs - and not rely onto some dependencies from springdoc. Since that would imply that every Spring Boot project that wanted to adopt the solution outlined here would need to integrate springdoc classes in their projects.
 
 
 
@@ -114,23 +114,19 @@ public class WeatherBackendAPI {
 
     private static final Logger LOG = LoggerFactory.getLogger(WeatherBackendController.class);
 
-    private ObjectMapper objectMapper = new ObjectMapper();;
-
-    @RequestMapping(path = "/general/outlook", method=RequestMethod.POST, produces="application/json")
-    @ResponseStatus(HttpStatus.OK)
+    @PostMapping(value = "/general/outlook", produces = "application/json")
     public @ResponseBody GeneralOutlook generateGeneralOutlook(@RequestBody Weather weather) throws JsonProcessingException {
         ...
         return outlook;
     }
 
-    @RequestMapping(path = "/general/outlook", method=RequestMethod.GET, produces="application/json")
-    @ResponseStatus(HttpStatus.OK)
+    @GetMapping(value = "/general/outlook", produces = "application/json")
     public @ResponseBody String infoAboutGeneralOutlook() throws JsonProcessingException {
         ...
         return "Try a POST also against this URL! Just send some body with it like: '" + weatherJson + "'";
     }
 
-    @RequestMapping(value = "/{name}", method = RequestMethod.GET, produces = "text/plain")
+    @GetMapping(value = "/{name}", produces = "text/plain")
     public String whatsTheSenseInThat(@PathVariable("name") String name) {
         LOG.info("Request for /{name} with GET");
         return "Hello " + name + "! This is a RESTful HttpService written in Spring. :)";
@@ -146,12 +142,12 @@ See the docs at https://github.com/springdoc/springdoc-openapi-maven-plugin on h
 
 > The aim of springdoc-openapi-maven-plugin is to generate json and yaml OpenAPI description during build time. The plugin works during integration-tests phase, and generates the OpenAPI description. The plugin works in conjunction with spring-boot-maven plugin.
 
-But in order to successfully run the springdoc-openapi-maven-plugin, we need to add the [springdoc-openapi-ui](https://github.com/springdoc/springdoc-openapi) plugin (for Tomcat / Spring MVC based apps) or the [springdoc-openapi-webflux-ui](https://github.com/springdoc/springdoc-openapi#spring-webflux-support-with-annotated-controllers) plugin (for Reactive WebFlux / Netty based apps) to our [hellobackend/pom.xml](hellobackend/pom.xml):
+But in order to successfully run the springdoc-openapi-maven-plugin, we need to add the [springdoc-openapi-ui](https://github.com/springdoc/springdoc-openapi) plugin (for Tomcat / Spring MVC based apps) or the [springdoc-openapi-webflux-ui](https://github.com/springdoc/springdoc-openapi#spring-webflux-support-with-annotated-controllers) plugin (for Reactive WebFlux / Netty based apps) to our [weatherbackend/pom.xml](hellobackend/pom.xml):
 
 ```xml
 <dependency>
     <groupId>org.springdoc</groupId>
-    <artifactId>springdoc-openapi-webflux-ui</artifactId>
+    <artifactId>springdoc-openapi-ui</artifactId>
     <version>1.4.8</version>
 </dependency>
 ```
