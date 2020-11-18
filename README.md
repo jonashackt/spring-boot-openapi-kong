@@ -15,6 +15,8 @@ Bringing together Kong & Spring Boot. But wait, what is https://github.com/Kong/
 
 > Kong is a cloud-native, fast, scalable, and distributed Microservice Abstraction Layer (also known as an API Gateway or API Middleware). 
 
+This project is also used as sample for this article:
+https://blog.codecentric.de/en/2020/11/spring-boot-kong 
 
 ## Table of Contents 
 
