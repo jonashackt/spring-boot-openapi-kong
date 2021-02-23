@@ -1,0 +1,57 @@
+name: openapi-to-kong-config-full-setup
+
+on: [push]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Install Node/npm for Inso
+      uses: actions/setup-node@v2
+      with:
+        node-version: '14'
+
+    - name: Install Java & Maven
+      uses: actions/setup-java@v1
+      with:
+        java-version: 15
+
+    - name: Install Inso and run Maven build, that'll generate OpenAPI spec and Kong declarative config later needed for Docker Compose
+      run: |
+        echo "Install insomnia-inso (Inso CLI) which is needed by our Maven build process later"
+        npm install insomnia-inso
+
+        echo "Show Inso version"
+        node_modules/insomnia-inso/bin/inso --version
+
+        echo "Build Spring Boot app with Maven"
+        echo "This also generates OpenAPI spec file at weatherbackend/target/openapi.json and the Kong declarative config at kong/kong.yml from the OpenAPI spec with Inso CLI"
+        mvn clean verify --file weatherbackend/pom.xml --no-transfer-progress -Dinso.executable.path=node_modules/insomnia-inso/bin/inso
+
+        echo "Show kong.yml"
+        cat kong/kong.yml
+
+    - name: Fire up Docker Compose setup with Kong & do some checks
+      run: |
+        docker-compose up -d
+
+        echo "Let's wait until Kong is available (we need to improve this)"
+        sleep 10
+
+        echo "Also have a look into the Kong & Spring Boot app logs"
+        docker ps -a
+        docker-compose logs kong
+        docker-compose logs weatherbackend
+
+        echo "Have a look at the /services endpoint of Kong's admin API"
+        curl http://localhost:8001/services
+
+        echo "Verify that we can call our Spring Boot service through Kong"
+        curl http://localhost:8000/weather/MaxTheKongUser
+
+        echo "Again look into Kong logs to see the service call"
+        docker-compose logs kong
