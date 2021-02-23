@@ -1,7 +1,7 @@
 # spring-boot-openapi-kong
 
 [![Build Status](https://travis-ci.com/jonashackt/spring-boot-openapi-kong.svg?branch=main)](https://travis-ci.com/jonashackt/spring-boot-openapi-kong)
-[![Build Status](https://github.com/jonashackt/spring-boot-openapi-kong/workflows/build/badge.svg)](https://github.com/jonashackt/spring-boot-openapi-kong/actions)
+[![Build Status](https://github.com/jonashackt/spring-boot-openapi-kong/workflows/openapi-to-kong-config-full-setup/badge.svg)](https://github.com/jonashackt/spring-boot-openapi-kong/actions)
 [![License](http://img.shields.io/:license-mit-blue.svg)](https://github.com/jonashackt/spring-boot-buildpack/blob/master/LICENSE)
 [![renovateenabled](https://img.shields.io/badge/renovate-enabled-yellow)](https://renovatebot.com)
 [![versionspringboot](https://img.shields.io/badge/dynamic/xml?color=brightgreen&url=https://raw.githubusercontent.com/jonashackt/spring-boot-openapi-kong/main/weatherbackend/pom.xml&query=%2F%2A%5Blocal-name%28%29%3D%27project%27%5D%2F%2A%5Blocal-name%28%29%3D%27parent%27%5D%2F%2A%5Blocal-name%28%29%3D%27version%27%5D&label=springboot)](https://github.com/spring-projects/spring-boot)
@@ -842,7 +842,7 @@ As we want to make sure everything works as expected every time code changes we 
 
 Now that we depend on `Inso CLI` installation, which depends on Node.js/NPM and Maven at the same time, we need go with a very flexible CloudCI solution.
 
-As we probably also need Docker Compose on our CI system I decided to go with TravisCI since here we have a full-blown virtual machine to do everything we want.
+As we probably also need Docker Compose on our CI system I decided to go with GitHub Actions since here we have a full-blown virtual machine to do everything we want.
 
 So let's create a [.travis.yml](.travis.yml) to execute our Maven build (and don't forget to add `--no-transfer-progress` to the Maven command, since otherwise our build logs get polluted with downloads):
 
