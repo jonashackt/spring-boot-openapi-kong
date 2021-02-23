@@ -22,8 +22,10 @@ jobs:
 
     - name: Install Inso and run Maven build, that'll generate OpenAPI spec and Kong declarative config later needed for Docker Compose
       run: |
-        # Install insomnia-inso (Inso CLI) which is needed by our Maven build process later
+        echo "Install insomnia-inso (Inso CLI) which is needed by our Maven build process later"
         npm install insomnia-inso
+
+        echo "Show Inso version"
         node_modules/insomnia-inso/bin/inso --version
 
         echo "Build Spring Boot app with Maven"
