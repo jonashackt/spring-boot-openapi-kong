@@ -1,6 +1,5 @@
 # spring-boot-openapi-kong
 
-[![Build Status](https://travis-ci.com/jonashackt/spring-boot-openapi-kong.svg?branch=main)](https://travis-ci.com/jonashackt/spring-boot-openapi-kong)
 [![Build Status](https://github.com/jonashackt/spring-boot-openapi-kong/workflows/openapi-to-kong-config-full-setup/badge.svg)](https://github.com/jonashackt/spring-boot-openapi-kong/actions)
 [![License](http://img.shields.io/:license-mit-blue.svg)](https://github.com/jonashackt/spring-boot-buildpack/blob/master/LICENSE)
 [![renovateenabled](https://img.shields.io/badge/renovate-enabled-yellow)](https://renovatebot.com)
@@ -844,41 +843,45 @@ Now that we depend on `Inso CLI` installation, which depends on Node.js/NPM and 
 
 As we probably also need Docker Compose on our CI system I decided to go with GitHub Actions since here we have a full-blown virtual machine to do everything we want.
 
-So let's create a [.travis.yml](.travis.yml) to execute our Maven build (and don't forget to add `--no-transfer-progress` to the Maven command, since otherwise our build logs get polluted with downloads):
+So let's create a [.github/workflows/openapi-to-kong-config-full-setup.yml](.github/workflows/openapi-to-kong-config-full-setup.yml) to execute our Maven build (and don't forget to add `--no-transfer-progress` to the Maven command, since otherwise our build logs get polluted with downloads):
 
 ```yaml
-# use https://docs.travis-ci.com/user/languages/javascript-with-nodejs/ Travis build image
-language: node_js
+name: openapi-to-kong-config-full-setup
 
-services:
-  - docker
+on: [push]
 
-script:
-  # Install insomnia-inso (Inso CLI) which is needed by our Maven build process later
-  - npm install insomnia-inso
-  - inso --version
+jobs:
+  build:
 
-  # Install Java & Maven with SDKMAN
-  - curl -s "https://get.sdkman.io" | bash
-  - source "$HOME/.sdkman/bin/sdkman-init.sh"
-  - sdk install java 15.0.1.hs-adpt
-  - sdk install maven
+    runs-on: ubuntu-latest
 
-  # Build Spring Boot app with Maven
-  # This also generates OpenAPI spec file at weatherbackend/target/openapi.json
-  # and the Kong declarative config at kong/kong.yml from the OpenAPI spec with Inso CLI
-  - mvn clean verify --file weatherbackend/pom.xml --no-transfer-progress
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install Node/npm for Inso
+        uses: actions/setup-node@v2
+        with:
+          node-version: '14'
+
+      - name: Install Java & Maven
+        uses: actions/setup-java@v1
+        with:
+          java-version: 15
+
+      - name: Install Inso and run Maven build, that'll generate OpenAPI spec and Kong declarative config later needed for Docker Compose
+        run: |
+          echo "Install insomnia-inso (Inso CLI) which is needed by our Maven build process later"
+          npm install insomnia-inso
+
+          echo "Show Inso version"
+          node_modules/insomnia-inso/bin/inso --version
+
+          echo "Build Spring Boot app with Maven"
+          echo "This also generates OpenAPI spec file at weatherbackend/target/openapi.json and the Kong declarative config at kong/kong.yml from the OpenAPI spec with Inso CLI"
+          mvn clean verify --file weatherbackend/pom.xml --no-transfer-progress -Dinso.executable.path=node_modules/insomnia-inso/bin/inso
 ```
 
-If you're running into strange installation errors of `insomnia-inso`, you may need to upgrade to the latest `node` version available on TravisCI! I [had strange errors like this one](https://travis-ci.com/github/jonashackt/spring-boot-openapi-kong/builds/198453295) and got over it with the following configuration inside the [.travis.yml](.travis.yml):
-
-```yaml
-language: node_js
-node_js:
-  - 15
-``` 
-
-I also ran into another problem. TravisCI couldn't find the `inso` executable (see this build) and produced the following error:
+I also ran into another problem. GitHub Actions couldn't find the `inso` executable (see this build) and produced the following error:
 
 ```
 ERROR] Failed to execute goal org.codehaus.mojo:exec-maven-plugin:3.0.0:exec (execute-inso-cli) on project weatherbackend: Command execution failed.: Cannot run program "inso" (in directory "/home/travis/build/jonashackt/spring-boot-openapi-kong/weatherbackend"): error=2, No such file or directory -> [Help 1]
@@ -907,19 +910,19 @@ So let's try it! We alter our [weatherbackend/pom.xml](weatherbackend/pom.xml) s
 ...
 ```
 
-With this change we should be able to run our normal `mvn verify` locally - and a special `mvn verify -DskipTests=true -Dinso.executable.path=inso-special-path` on TravisCI like this:
+With this change we should be able to run our normal `mvn verify` locally - and a special `mvn verify -DskipTests=true -Dinso.executable.path=inso-special-path` on GitHub Actions like this:
 
 ```
 mvn clean verify --file weatherbackend/pom.xml --no-transfer-progress -Dinso.executable.path=node_modules/insomnia-inso/bin/inso
 ```
 
-Now [our TravisCI build works like a charm](https://travis-ci.com/github/jonashackt/spring-boot-openapi-kong/builds/198466347) :)
+Now [our build works like a charm](https://travis-ci.com/github/jonashackt/spring-boot-openapi-kong/builds/198466347) :)
 
 At the end we also look into the generated [kong/kong.yml](kong/kong.yml):
 
 ```yaml
-  # Show kong.yml
-  - cat kong/kong.yml
+  echo "Show kong.yml"
+  cat kong/kong.yml
 ```
 
 
@@ -931,28 +934,29 @@ Therefore it would be great to initialize a Maven build every time we fire up ou
 
 As we now have a CI server, we can also use it to fire up our Compose setup every time the full chain was build and generated!
 
-All we have to do here is to fire up our setup - and curl Kong with the correct service path. So let's add both to our [.travis.yml](.travis.yml):
+All we have to do here is to fire up our setup - and curl Kong with the correct service path. So let's add both to our [.github/workflows/openapi-to-kong-config-full-setup.yml](.github/workflows/openapi-to-kong-config-full-setup.yml):
 
 ```yaml
-  # Fire Up Docker Compose setup with Kong
-  - docker-compose up -d
+    - name: Fire up Docker Compose setup with Kong & do some checks
+      run: |
+        docker-compose up -d
 
-  # Let's wait until Kong is available (we need to improve this)
-  - sleep 10
+        echo "Let's wait until Kong is available (we need to improve this)"
+        sleep 10
 
-  # Also have a look into the Kong & Spring Boot app logs
-  - docker ps -a
-  - docker-compose logs kong
-  - docker-compose logs weatherbackend
+        echo "Also have a look into the Kong & Spring Boot app logs"
+        docker ps -a
+        docker-compose logs kong
+        docker-compose logs weatherbackend
 
-  # Have a look at the /services endpoint of Kong's admin API
-  - curl http://localhost:8001/services
+        echo "Have a look at the /services endpoint of Kong's admin API"
+        curl http://localhost:8001/services
 
-  # Verify that we can call our Spring Boot service through Kong
-  - curl http://localhost:8000/weather/MaxTheKongUser
+        echo "Verify that we can call our Spring Boot service through Kong"
+        curl http://localhost:8000/weather/MaxTheKongUser
 
-  # Again look into Kong logs to see the service call
-  - docker-compose logs kong
+        echo "Again look into Kong logs to see the service call"
+        docker-compose logs kong
 ```
 
 Right after starting `docker-compose up` we need to wait for the containers to spin up. Currently [I use `sleep` here](https://stackoverflow.com/a/47439672/4964553) - it's dead simply, but it works right now :)
