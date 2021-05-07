@@ -1,4 +1,4 @@
-FROM openjdk:11-jdk-slim
+FROM openjdk:17-jdk-slim
 
 MAINTAINER Jonas Hecht
 
