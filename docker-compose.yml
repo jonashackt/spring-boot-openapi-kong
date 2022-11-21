@@ -2,7 +2,7 @@ version: '3.7'
 
 services:
   kong:
-    image: kong:2.8.1
+    image: kong:2.8.3
     environment:
       KONG_ADMIN_ACCESS_LOG: /dev/stdout
       KONG_ADMIN_ERROR_LOG: /dev/stderr
