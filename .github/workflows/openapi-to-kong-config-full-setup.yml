@@ -13,7 +13,7 @@ jobs:
     - name: Install Node/npm for Inso
       uses: actions/setup-node@v3
       with:
-        node-version: '14'
+        node-version: '22'
 
     - name: Install Java & Maven
       uses: actions/setup-java@v3
