@@ -19,7 +19,7 @@ jobs:
       uses: actions/setup-java@v3
       with:
         distribution: 'adopt'
-        java-version: 15
+        java-version: 25.0.4+101.0.LTS
 
     - name: Install Inso and run Maven build, that'll generate OpenAPI spec and Kong declarative config later needed for Docker Compose
       run: |
